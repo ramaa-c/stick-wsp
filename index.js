@@ -342,7 +342,7 @@ async function manejar(msg) {
     }
 
     if (!esVideo) {
-      const webp = await agregarDatos(await imagenASticker(buffer), nombre, autor);
+      const webp = agregarDatos(await imagenASticker(buffer), nombre, autor);
       await enviar(jid, { sticker: webp }, msg);
       await reaccionar(msg, '✅');
       log(`Sticker estático enviado (${jid})`);
@@ -355,7 +355,7 @@ async function manejar(msg) {
       maxSegundos: conSonido ? CONFIG.segundosSonido : CONFIG.segundosSticker,
       conAudio: conSonido,
     });
-    const webp = await agregarDatos(r.webp, nombre, autor);
+    const webp = agregarDatos(r.webp, nombre, autor);
 
     if (conSonido && r.audio) {
       try {

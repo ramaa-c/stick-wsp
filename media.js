@@ -152,26 +152,79 @@ export async function extraerAudio(buffer, maxSegundos = 30) {
   });
 }
 
-/** Agrega el nombre del paquete y el autor al sticker (metadatos EXIF de WhatsApp) */
-export async function agregarDatos(webp, nombre, autor) {
+/**
+ * Agrega el nombre del paquete y el autor al sticker (metadatos EXIF de WhatsApp).
+ *
+ * Se arma a mano, sin librerías, para no tocar nada más del archivo. Una versión anterior
+ * usaba node-webpmux, que al guardar borraba la marca de "tiene transparencia" (VP8X alpha)
+ * en los stickers animados: el celular lo ignoraba, pero WhatsApp para Windows los dibujaba mal.
+ */
+export function agregarDatos(webp, nombre, autor) {
   try {
-    const { default: webpmux } = await import('node-webpmux');
-    const img = new webpmux.Image();
-    await img.load(webp);
-    const json = {
+    if (webp.toString('ascii', 0, 4) !== 'RIFF' || webp.toString('ascii', 8, 12) !== 'WEBP') return webp;
+
+    // Separar los bloques del archivo
+    const bloques = [];
+    for (let i = 12; i + 8 <= webp.length;) {
+      const tipo = webp.toString('ascii', i, i + 4);
+      const largo = webp.readUInt32LE(i + 4);
+      bloques.push({ tipo, datos: webp.subarray(i + 8, i + 8 + largo) });
+      i += 8 + largo + (largo & 1);
+    }
+
+    // Armar el bloque EXIF con el JSON que lee WhatsApp
+    const json = Buffer.from(JSON.stringify({
       'sticker-pack-id': crypto.randomBytes(16).toString('hex'),
       'sticker-pack-name': nombre,
       'sticker-pack-publisher': autor,
       emojis: [''],
-    };
+    }), 'utf8');
     const cabecera = Buffer.from([0x49, 0x49, 0x2a, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x41, 0x57,
       0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00]);
-    const datos = Buffer.from(JSON.stringify(json), 'utf8');
-    const exif = Buffer.concat([cabecera, datos]);
-    exif.writeUIntLE(datos.length, 14, 4);
-    img.exif = exif;
-    return await img.save(null);
+    const exif = Buffer.concat([cabecera, json]);
+    exif.writeUInt32LE(json.length, 14);
+
+    // ¿Tiene transparencia? (bloque ALPH suelto o dentro de algún cuadro, o un VP8L con alfa)
+    const tieneAlfa = webp.includes(Buffer.from('ALPH')) ||
+      bloques.some((b) => b.tipo === 'VP8L' && b.datos.length > 4 && (b.datos[4] & 0x10));
+
+    let vp8x = bloques.find((b) => b.tipo === 'VP8X');
+    if (!vp8x) {
+      // Imagen simple: hay que crear la cabecera extendida con el tamaño del lienzo
+      const img = bloques.find((b) => b.tipo === 'VP8 ' || b.tipo === 'VP8L');
+      if (!img) return webp;
+      let ancho, alto;
+      if (img.tipo === 'VP8 ') { ancho = img.datos.readUInt16LE(6) & 0x3fff; alto = img.datos.readUInt16LE(8) & 0x3fff; }
+      else { const v = img.datos.readUInt32LE(1); ancho = (v & 0x3fff) + 1; alto = ((v >> 14) & 0x3fff) + 1; }
+      const d = Buffer.alloc(10);
+      d.writeUIntLE(ancho - 1, 4, 3); d.writeUIntLE(alto - 1, 7, 3);
+      vp8x = { tipo: 'VP8X', datos: d };
+      bloques.unshift(vp8x);
+    }
+    const cab = Buffer.from(vp8x.datos);
+    cab[0] |= 0x08;                 // tiene EXIF
+    if (tieneAlfa) cab[0] |= 0x10;  // tiene transparencia (lo importante para WhatsApp de Windows)
+    vp8x.datos = cab;
+
+    // Fondo del lienzo animado: transparente en vez de blanco
+    const anim = bloques.find((b) => b.tipo === 'ANIM');
+    if (anim) { const a2 = Buffer.from(anim.datos); a2.writeUInt32LE(0, 0); anim.datos = a2; }
+
+    const salida = bloques.filter((b) => b.tipo !== 'EXIF');
+    salida.push({ tipo: 'EXIF', datos: exif });
+
+    const partes = [];
+    for (const b of salida) {
+      const h = Buffer.alloc(8);
+      h.write(b.tipo, 0, 'ascii'); h.writeUInt32LE(b.datos.length, 4);
+      partes.push(h, b.datos);
+      if (b.datos.length & 1) partes.push(Buffer.alloc(1));
+    }
+    const cuerpo = Buffer.concat(partes);
+    const riff = Buffer.alloc(12);
+    riff.write('RIFF', 0, 'ascii'); riff.writeUInt32LE(cuerpo.length + 4, 4); riff.write('WEBP', 8, 'ascii');
+    return Buffer.concat([riff, cuerpo]);
   } catch {
-    return webp; // si falla, se manda sin nombre/autor
+    return webp; // si algo sale mal, se manda sin nombre/autor
   }
 }
