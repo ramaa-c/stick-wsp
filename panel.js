@@ -9,7 +9,8 @@ import path from 'node:path';
 import { fork, exec } from 'node:child_process';
 import QRCode from 'qrcode';
 import { DIR, cargarConfig, guardarConfig, PREDETERMINADA } from './config.js';
-import { imagenASticker, videoASticker, ErrorConversion } from './media.js';
+import crypto from 'node:crypto';
+import { imagenASticker, videoASticker, agregarDatos, ErrorConversion } from './media.js';
 
 const ABRIR_NAVEGADOR = !process.argv.includes('--sin-navegador');
 const ARCHIVO_LOG = path.join(DIR, 'bot.log');
@@ -91,6 +92,7 @@ function iniciarBot() {
       publicarEstado();
     }
     if (m.tipo === 'codigo') { estado.codigo = m.codigo; publicarEstado(); }
+    if (m.tipo === 'enviado') { const p = esperandoEnvio.get(m.id); if (p) { esperandoEnvio.delete(m.id); p(m); } }
     if (m.tipo === 'hecho') {
       const item = { cuando: Date.now(), clase: m.clase, chat: String(m.chat || '').split('@')[0], detalle: m.detalle || '' };
       historial.unshift(item);
@@ -161,6 +163,28 @@ function ponerAutoarranque(activar) {
   ].join('\r\n');
   fs.writeFileSync(ACCESO_INICIO, vbs);
   return true;
+}
+
+// ---------- Estudio: archivos subidos y stickers creados ----------
+const subidos = new Map();     // id -> { buffer, mime, cuando }
+const creados = new Map();     // id -> { webp, audio, duracionMs, cuando }
+const esperandoEnvio = new Map();
+const nuevoId = () => crypto.randomBytes(8).toString('hex');
+
+function limpiarViejos(mapa, max) {
+  const limite = Date.now() - 30 * 60 * 1000;
+  for (const [k, v] of mapa) if (v.cuando < limite) mapa.delete(k);
+  while (mapa.size > max) mapa.delete(mapa.keys().next().value);
+}
+
+function mandarAlBot(datos) {
+  return new Promise((resolve) => {
+    if (!hijo || estado.bot !== 'conectado') return resolve({ ok: false, error: 'El bot no está conectado a WhatsApp.' });
+    const id = nuevoId();
+    const t = setTimeout(() => { esperandoEnvio.delete(id); resolve({ ok: false, error: 'WhatsApp tardó demasiado en responder.' }); }, 90000);
+    esperandoEnvio.set(id, (r) => { clearTimeout(t); resolve(r); });
+    try { hijo.send({ tipo: 'enviar', id, ...datos }); } catch (e) { clearTimeout(t); esperandoEnvio.delete(id); resolve({ ok: false, error: e.message }); }
+  });
 }
 
 // ---------- Servidor ----------
@@ -242,27 +266,55 @@ const servidor = http.createServer(async (req, res) => {
         fs.writeFile(ARCHIVO_HISTORIAL, '[]', () => {});
         return json(res, 200, { ok: true });
 
-      case 'POST /api/probar': {
-        // Prueba de conversión sin pasar por WhatsApp
-        const modo = url.searchParams.get('modo') || 's';
-        const tipo = String(req.headers['content-type'] || '');
-        const cuerpo = await leerCuerpo(req);
-        if (!cuerpo.length) return json(res, 400, { error: 'No llegó ningún archivo.' });
-        const esVideo = tipo.startsWith('video/') || tipo === 'image/gif';
-        if (!esVideo && !tipo.startsWith('image/')) return json(res, 400, { error: 'Elegí una imagen, un GIF o un video.' });
-        if (!esVideo) {
-          const webp = await imagenASticker(cuerpo);
-          return json(res, 200, { webp: webp.toString('base64'), kb: Math.round(webp.length / 1024) });
+      case 'POST /api/subir': {
+        // Paso 1 del estudio: se sube la foto o el video una sola vez
+        const mime = String(req.headers['content-type'] || '').split(';')[0];
+        const esVideo = mime.startsWith('video/') || mime === 'image/gif';
+        if (!esVideo && !mime.startsWith('image/')) return json(res, 400, { error: 'Elegí una imagen, un GIF o un video.' });
+        const buffer = await leerCuerpo(req);
+        if (!buffer.length) return json(res, 400, { error: 'No llegó ningún archivo.' });
+        const id = nuevoId();
+        subidos.set(id, { buffer, mime, cuando: Date.now() });
+        limpiarViejos(subidos, 5);
+        return json(res, 200, { id, tipo: esVideo ? 'video' : 'imagen' });
+      }
+
+      case 'POST /api/crear': {
+        // Paso 2: arma el sticker con las opciones elegidas (se puede repetir cambiando opciones)
+        const o = JSON.parse((await leerCuerpo(req, 4 * 1024 * 1024)).toString() || '{}');
+        const subido = subidos.get(o.id);
+        if (!subido) return json(res, 400, { error: 'El archivo ya no está, volvé a elegirlo.' });
+        subido.cuando = Date.now();
+        const texto = o.texto ? Buffer.from(String(o.texto).replace(/^data:image\/png;base64,/, ''), 'base64') : null;
+        const esVideo = subido.mime.startsWith('video/') || subido.mime === 'image/gif';
+        let r;
+        if (esVideo) {
+          const tope = o.sonido ? config.segundosSonido : config.segundosSticker;
+          r = await videoASticker(subido.buffer, {
+            maxSegundos: Math.max(1, Math.min(tope, Number(o.segundos) || tope)),
+            conAudio: !!o.sonido, inicio: Number(o.inicio) || 0, llenar: !!o.llenar, texto,
+          });
+        } else {
+          r = { webp: await imagenASticker(subido.buffer, { llenar: !!o.llenar, texto }), audio: null, duracionMs: 0 };
         }
-        const r = await videoASticker(cuerpo, {
-          maxSegundos: modo === 'ss' ? config.segundosSonido : config.segundosSticker,
-          conAudio: modo === 'ss',
-        });
+        const webp = agregarDatos(r.webp, config.paquete, config.autor);
+        const id = nuevoId();
+        creados.set(id, { webp, audio: r.audio, duracionMs: r.duracionMs, cuando: Date.now() });
+        limpiarViejos(creados, 20);
         return json(res, 200, {
-          webp: r.webp.toString('base64'), kb: Math.round(r.webp.length / 1024),
-          audio: r.audio ? r.audio.toString('base64') : null, segundos: r.duracionMs / 1000, recortado: r.recortado,
-          sinSonido: modo === 'ss' && !r.audio,
+          id, webp: webp.toString('base64'), kb: Math.round(webp.length / 1024),
+          audio: r.audio ? r.audio.toString('base64') : null, segundos: r.duracionMs / 1000,
+          sinSonido: !!o.sonido && esVideo && !r.audio, animado: esVideo,
         });
+      }
+
+      case 'POST /api/enviar': {
+        // Paso 3: el bot lo manda a tu propio chat de WhatsApp
+        const { id } = JSON.parse((await leerCuerpo(req, 1024)).toString() || '{}');
+        const c = creados.get(id);
+        if (!c) return json(res, 400, { error: 'Ese sticker ya no está, volvé a crearlo.' });
+        const r = await mandarAlBot({ webp: c.webp.toString('base64'), audio: c.audio ? c.audio.toString('base64') : null, duracionMs: c.duracionMs });
+        return json(res, r.ok ? 200 : 409, r.ok ? { ok: true, conSonido: !!r.conSonido } : { error: r.error });
       }
 
       case 'POST /api/apagar':

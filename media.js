@@ -56,20 +56,36 @@ async function analizar(archivo) {
   return { duracion, tieneAudio, tieneVideo };
 }
 
-const encuadre = (lado, fps) =>
-  `${fps ? `fps=${fps},` : ''}scale=${lado}:${lado}:force_original_aspect_ratio=decrease,` +
-  `format=rgba,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=0x00000000,setsar=1`;
+// Arma los filtros de ffmpeg: encuadre en 512x512 transparente y, si hay, el texto encima.
+//   llenar=false: entra la imagen completa (con bordes transparentes)
+//   llenar=true:  recorta al cuadrado para llenar todo el sticker
+// Devuelve los argumentos de filtro y de salida para ffmpeg.
+function filtros({ lado, fps, llenar, conTexto }) {
+  const ajuste = llenar
+    ? `scale=${lado}:${lado}:force_original_aspect_ratio=increase,crop=${lado}:${lado}`
+    : `scale=${lado}:${lado}:force_original_aspect_ratio=decrease`;
+  const base = `${fps ? `fps=${fps},` : ''}${ajuste},format=rgba,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=0x00000000,setsar=1`;
+  if (!conTexto) return ['-vf', base];
+  return ['-filter_complex',
+    `[0:v]${base}[b];[1:v]scale=512:512,format=rgba[t];[b][t]overlay=0:0:format=auto:eof_action=repeat,format=rgba[v]`,
+    '-map', '[v]'];
+}
 
-/** Imagen (jpg, png, webp...) -> sticker estático 512x512 de menos de 100 KB */
-export async function imagenASticker(buffer) {
+/**
+ * Imagen (jpg, png, webp...) -> sticker estático 512x512 de menos de 100 KB.
+ * Opciones: llenar (recortar al cuadrado), texto (PNG 512x512 transparente para poner encima).
+ */
+export async function imagenASticker(buffer, { llenar = false, texto = null } = {}) {
   return conCarpeta(async (dir) => {
     const entrada = path.join(dir, 'entrada');
+    const capa = path.join(dir, 'texto.png');
     const salida = path.join(dir, 'sticker.webp');
     await fs.writeFile(entrada, buffer);
+    if (texto) await fs.writeFile(capa, texto);
     let ultimo = null;
     for (const [q, lado] of [[85, 512], [70, 512], [55, 512], [40, 448], [30, 384]]) {
-      await correr(['-i', entrada, '-frames:v', '1', '-vf', encuadre(lado),
-        '-c:v', 'libwebp', '-lossless', '0', '-q:v', String(q), '-compression_level', '6', salida]);
+      await correr(['-i', entrada, ...(texto ? ['-i', capa] : []), ...filtros({ lado, llenar, conTexto: !!texto }),
+        '-frames:v', '1', '-c:v', 'libwebp', '-lossless', '0', '-q:v', String(q), '-compression_level', '6', salida]);
       ultimo = await fs.readFile(salida);
       if (ultimo.length <= MAX_ESTATICO) return ultimo;
     }
@@ -78,18 +94,24 @@ export async function imagenASticker(buffer) {
 }
 
 /**
- * Video o GIF -> sticker animado (y opcionalmente su audio, de la misma duración).
- * Devuelve { webp, audio, duracionMs, recortado }.
+ * Video o GIF -> sticker animado (y opcionalmente su audio, del mismo tramo).
+ * Opciones: maxSegundos, conAudio, inicio (segundo desde donde empieza), llenar, texto (PNG).
+ * Devuelve { webp, audio, duracionMs, recortado, duracionVideo }.
  */
-export async function videoASticker(buffer, { maxSegundos = 8, conAudio = false } = {}) {
+export async function videoASticker(buffer, { maxSegundos = 8, conAudio = false, inicio = 0, llenar = false, texto = null } = {}) {
   return conCarpeta(async (dir) => {
     const entrada = path.join(dir, 'entrada');
+    const capa = path.join(dir, 'texto.png');
     await fs.writeFile(entrada, buffer);
+    if (texto) await fs.writeFile(capa, texto);
     const info = await analizar(entrada);
     if (!info.tieneVideo) throw new ErrorConversion('El archivo no tiene imagen de video.');
 
-    const segundos = Math.max(0.5, Math.min(maxSegundos, info.duracion || maxSegundos));
+    const desde = Math.max(0, Math.min(Number(inicio) || 0, info.duracion ? Math.max(0, info.duracion - 0.5) : 0));
+    const restante = info.duracion ? info.duracion - desde : maxSegundos;
+    const segundos = Math.max(0.5, Math.min(maxSegundos, restante));
     const salida = path.join(dir, 'sticker.webp');
+    const tramo = ['-ss', desde.toFixed(3), '-t', segundos.toFixed(3)];
 
     // De mejor a peor calidad hasta entrar en 500 KB
     const intentos = [
@@ -97,7 +119,8 @@ export async function videoASticker(buffer, { maxSegundos = 8, conAudio = false 
     ];
     let webp = null;
     for (const [fps, q, lado] of intentos) {
-      await correr(['-t', segundos.toFixed(3), '-i', entrada, '-vf', encuadre(lado, fps),
+      await correr([...tramo, '-i', entrada, ...(texto ? ['-i', capa] : []),
+        ...filtros({ lado, fps, llenar, conTexto: !!texto }),
         '-c:v', 'libwebp_anim', '-lossless', '0', '-q:v', String(q), '-compression_level', '4',
         '-loop', '0', '-an', salida]);
       webp = await fs.readFile(salida);
@@ -106,23 +129,24 @@ export async function videoASticker(buffer, { maxSegundos = 8, conAudio = false 
     if (webp.length > MAX_ANIMADO) throw new ErrorConversion('El video es demasiado complejo para un sticker. Probá con uno más corto.');
 
     let audio = null;
-    if (conAudio && info.tieneAudio) audio = await extraerDe(entrada, dir, segundos);
+    if (conAudio && info.tieneAudio) audio = await extraerDe(entrada, dir, segundos, desde);
 
     return {
       webp,
       audio,
       duracionMs: Math.round(segundos * 1000),
-      recortado: !!info.duracion && info.duracion > maxSegundos + 0.05,
+      recortado: !!info.duracion && restante > maxSegundos + 0.05,
+      duracionVideo: info.duracion,
     };
   });
 }
 
-async function extraerDe(entrada, dir, segundos) {
+async function extraerDe(entrada, dir, segundos, desde = 0) {
   const salida = path.join(dir, 'audio.ogg');
   const finFundido = Math.max(0, segundos - 0.15).toFixed(3);
   for (const kbps of [64, 48, 32]) {
     try {
-      await correr(['-t', segundos.toFixed(3), '-i', entrada, '-vn', '-map', '0:a:0',
+      await correr(['-ss', desde.toFixed(3), '-t', segundos.toFixed(3), '-i', entrada, '-vn', '-map', '0:a:0',
         '-af', `afade=t=out:st=${finFundido}:d=0.15`,
         '-c:a', 'libopus', '-b:a', `${kbps}k`, '-ac', '1', '-ar', '48000',
         '-application', 'audio', '-map_metadata', '-1', '-f', 'ogg', salida]);

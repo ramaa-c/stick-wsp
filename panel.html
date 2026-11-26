@@ -112,19 +112,50 @@
   .sticker .pie a { color: var(--tilde); text-decoration: none; font-weight: 600; }
   .sticker audio { width: 190px; height: 34px; margin-top: 4px; }
 
-  /* ---------- Barra de escribir ---------- */
-  .barra { background: var(--barra); display: flex; align-items: center; gap: 8px; padding: 9px 10px; z-index: 2; }
-  .barra .icono { color: var(--suave); font-size: 21px; }
-  .barra .icono:hover { background: rgba(0,0,0,.06); }
-  .campo {
-    flex: 1; background: var(--campo); border-radius: 22px; padding: 10px 16px; color: var(--suave); cursor: pointer;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; user-select: none;
+  /* ---------- Estudio ---------- */
+  .estudio { background: var(--bot); border-radius: 14px; box-shadow: var(--sombra); padding: 14px; margin: 6px 0; animation: entrar .18s ease-out; }
+  .estudio h2 { font-size: 15px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+  .estudio h2 small { font-weight: 400; color: var(--suave); font-size: 12.5px; margin-left: auto; }
+  .soltar {
+    border: 2px dashed color-mix(in srgb, var(--verde-vivo) 55%, transparent); border-radius: 14px; padding: 26px 14px; text-align: center;
+    cursor: pointer; color: var(--suave); transition: background .15s;
   }
-  .modo { border: 0; border-radius: 16px; padding: 6px 11px; font-family: inherit; font-weight: 600; font-size: 12.5px; cursor: pointer; background: var(--campo); color: var(--suave); }
-  .modo.on { background: var(--verde-vivo); color: #04361f; }
-  .redondo { width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--verde-vivo); color: #fff; font-size: 20px; cursor: pointer; flex: none; display: grid; place-items: center; }
-  .redondo:active { transform: scale(.94); }
-  .chat.encima { outline: 3px dashed var(--verde-vivo); outline-offset: -10px; }
+  .soltar:hover, .soltar.encima { background: color-mix(in srgb, var(--verde-vivo) 9%, transparent); }
+  .soltar .grande { font-size: 44px; display: block; margin-bottom: 6px; }
+  .soltar b { color: var(--texto); display: block; font-size: 15.5px; margin-bottom: 2px; }
+  .lienzo {
+    width: 256px; height: 256px; margin: 0 auto 12px; border-radius: 12px; overflow: hidden; position: relative;
+    background: repeating-conic-gradient(rgba(127,127,127,.18) 0 25%, transparent 0 50%) 0 0/20px 20px;
+  }
+  .lienzo img, .lienzo video, .lienzo canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .lienzo .fuente { object-fit: contain; }
+  .lienzo.llenar .fuente { object-fit: cover; }
+  .ctrl { display: flex; align-items: center; gap: 10px; margin: 9px 0; font-size: 13.5px; }
+  .ctrl > span:first-child { width: 78px; color: var(--suave); flex: none; }
+  .ctrl input[type=text] { flex: 1; font: inherit; color: var(--texto); background: var(--barra); border: 0; border-radius: 8px; padding: 8px 10px; }
+  .ctrl input[type=range] { flex: 1; accent-color: var(--verde-vivo); }
+  .ctrl output { width: 42px; text-align: right; font-variant-numeric: tabular-nums; color: var(--suave); }
+  .seg { display: inline-flex; background: var(--barra); border-radius: 9px; padding: 3px; gap: 2px; }
+  .seg button { border: 0; background: none; color: var(--suave); font: inherit; font-size: 13px; padding: 5px 11px; border-radius: 7px; cursor: pointer; }
+  .seg button.on { background: var(--bot); color: var(--texto); box-shadow: var(--sombra); font-weight: 600; }
+  .acciones { display: flex; gap: 8px; margin-top: 12px; }
+  .btn { flex: 1; border: 0; border-radius: 22px; padding: 11px 12px; font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer; background: var(--barra); color: var(--texto); }
+  .btn.verde { background: var(--verde-vivo); color: #04361f; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .btn.chico { flex: none; font-weight: 600; padding: 11px 14px; }
+  .resultado { text-align: center; }
+  .resultado img { width: 200px; height: 200px; object-fit: contain; filter: drop-shadow(0 3px 6px rgba(0,0,0,.25)); animation: pop .35s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes pop { from { transform: scale(.5) rotate(-8deg); opacity: 0; } }
+  .resultado audio { display: block; margin: 6px auto 0; height: 34px; }
+  .resultado .datos { font-size: 12px; color: var(--suave); margin-top: 4px; }
+  .consejo { font-size: 12.5px; color: var(--suave); background: var(--barra); border-radius: 10px; padding: 9px 11px; margin-top: 10px; line-height: 1.45; }
+  .cargando { text-align: center; padding: 30px 0; color: var(--suave); }
+  .cargando .gira { display: inline-block; font-size: 34px; animation: gira 1s linear infinite; }
+  @keyframes gira { to { transform: rotate(360deg); } }
+  .galeria { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 2px; }
+  .galeria img { width: 64px; height: 64px; object-fit: contain; border-radius: 8px; background: var(--barra); cursor: pointer; flex: none; }
+  .galeria img:hover { outline: 2px solid var(--verde-vivo); }
+  .estado-mini { display: flex; align-items: center; gap: 8px; }
 
   /* ---------- Hojas (configuración / registro) ---------- */
   .hoja {
@@ -185,17 +216,16 @@
     <div class="chip">Hoy</div>
     <div class="chip aviso">🔒 Los stickers de este chat están cifrados de punta a punta. Bueno… más o menos. Es un bot hecho en casa.</div>
     <div id="estadoMsj"></div>
-    <div id="actividadMsj"></div>
-    <div id="pruebas" style="display:contents"></div>
-  </main>
 
-  <footer class="barra">
-    <button class="icono" id="bAdjuntar" title="Adjuntar foto o video">📎</button>
-    <div class="campo" id="campo">Mandame una foto o video para probar…</div>
-    <button class="modo" id="bModo" title="Con o sin sonido">🔇 sin sonido</button>
-    <button class="redondo" id="bEnviar" title="Elegir archivo">➤</button>
-    <input type="file" id="archivo" accept="image/*,video/*" hidden>
-  </footer>
+    <section class="estudio" id="estudio">
+      <h2>🍭 Fábrica de stickers <small id="estudioAyuda">se manda a tu “Mensaje para mí”</small></h2>
+      <div id="paso"></div>
+    </section>
+
+    <div id="galeriaMsj"></div>
+    <div id="actividadMsj"></div>
+  </main>
+  <input type="file" id="archivo" accept="image/*,video/*" hidden>
 
   <!-- Hoja: configuración -->
   <section class="hoja" id="hojaConfig">
@@ -287,8 +317,7 @@ function pintarEstado() {
 
   let html;
   if (on) {
-    html = burbuja(`<p>¡Ya estoy en línea! 😎</p><p>Mandame a cualquier chat (incluso a vos mismo):</p>
-      <p>🔊 un video con <span class="cmd">${esc(P)}ss</span> → sticker con sonido<br>🖼️ una foto o video con <span class="cmd">${esc(P)}s</span> → sticker común</p>`);
+    html = burbuja(`<p>¡Ya estoy en línea! 😎 Creá un sticker acá abajo, o mandame en WhatsApp un video con <span class="cmd">${esc(P)}ss</span> (con sonido) o una foto con <span class="cmd">${esc(P)}s</span>.</p>`);
   } else if (estado.codigo) {
     html = burbuja(`<p>Para vincularme, escribí este código en tu celu 👇</p><div class="codigo">${esc(estado.codigo)}</div>
       <ol class="pasos"><li>WhatsApp › <b>Dispositivos vinculados</b></li><li><b>Vincular dispositivo</b> › <b>con el número de teléfono</b></li><li>Poné el código y listo</li></ol>`, { tics: false });
@@ -387,45 +416,169 @@ $('bLimpiarLog').onclick = () => { $('registro').innerHTML = ''; };
 $('bPlay').onclick = () => api(corriendo() ? '/api/detener' : '/api/iniciar').catch((e) => tostada(e.message));
 $('bReiniciar').onclick = () => api('/api/reiniciar').then(() => tostada('Reiniciando… 🔄')).catch((e) => tostada(e.message));
 
-// ---------- Probar stickers desde la barra ----------
+// ---------- Estudio de stickers ----------
 const archivo = $('archivo'), chat = $('chat');
-const elegir = () => archivo.click();
-$('bAdjuntar').onclick = elegir; $('campo').onclick = elegir; $('bEnviar').onclick = elegir;
-$('bModo').onclick = () => {
-  conSonido = !conSonido;
-  $('bModo').classList.toggle('on', conSonido);
-  $('bModo').textContent = conSonido ? '🔊 con sonido' : '🔇 sin sonido';
-  $('campo').textContent = conSonido ? 'Mandame un video con sonido…' : 'Mandame una foto o video para probar…';
-};
-archivo.onchange = () => { if (archivo.files[0]) probar(archivo.files[0]); archivo.value = ''; };
-chat.ondragover = (e) => { e.preventDefault(); chat.classList.add('encima'); };
-chat.ondragleave = () => chat.classList.remove('encima');
-chat.ondrop = (e) => { e.preventDefault(); chat.classList.remove('encima'); if (e.dataTransfer.files[0]) probar(e.dataTransfer.files[0]); };
+const E = { id: null, tipo: null, url: null, dur: 0, llenar: false, texto: '', pos: 'abajo', desde: 0, largo: 6, sonido: true, resultado: null };
+let galeria = [];
 
-function alFondo() { chat.scrollTop = chat.scrollHeight; }
+function pasoVacio() {
+  E.id = null; E.resultado = null;
+  if (E.url) URL.revokeObjectURL(E.url), E.url = null;
+  $('paso').innerHTML = `<div class="soltar" id="soltar"><span class="grande">🖼️🎬</span><b>Soltá una foto o un video acá</b>o tocá para elegir uno · videos con sonido = sticker que suena 🔊</div>`;
+  $('soltar').onclick = () => archivo.click();
+}
 
-async function probar(f) {
-  const zona = $('pruebas');
-  const icono = (f.type || '').startsWith('video') ? '🎬' : '🖼️';
-  zona.insertAdjacentHTML('beforeend', `<div class="msj yo"><p>${icono} ${esc(f.name)}${conSonido ? ' <span class="cmd">!ss</span>' : ' <span class="cmd">!s</span>'}</p><span class="hora">${hora()}<span class="tic">✓✓</span></span></div>`);
-  alFondo();
+function seg(nombre, opciones, valor) {
+  return `<div class="seg" data-seg="${nombre}">${opciones.map(([v, t]) => `<button type="button" data-v="${v}" class="${String(v) === String(valor) ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+}
+
+function pasoEditar() {
+  const esVideo = E.tipo === 'video';
+  const tope = E.sonido ? (config.segundosSonido || 10) : (config.segundosSticker || 8);
+  E.largo = Math.min(E.largo, tope);
+  $('paso').innerHTML = `
+    <div class="lienzo ${E.llenar ? 'llenar' : ''}" id="lienzo">
+      ${esVideo ? `<video class="fuente" id="fuente" src="${E.url}" muted playsinline autoplay loop></video>` : `<img class="fuente" id="fuente" src="${E.url}">`}
+      <canvas id="capa" width="512" height="512"></canvas>
+    </div>
+    <div class="ctrl"><span>Encuadre</span>${seg('llenar', [[false, 'Completo'], [true, 'Llenar']], E.llenar)}</div>
+    <div class="ctrl"><span>Texto</span><input type="text" id="texto" maxlength="40" placeholder="opcional, ej: JAJAJA" value="${esc(E.texto)}"></div>
+    <div class="ctrl"><span></span>${seg('pos', [['arriba', 'Arriba'], ['abajo', 'Abajo']], E.pos)}</div>
+    ${esVideo ? `
+      <div class="ctrl"><span>Desde</span><input type="range" id="desde" min="0" max="${Math.max(0, E.dur - 0.5).toFixed(1)}" step="0.1" value="${E.desde}"><output id="oDesde">${E.desde.toFixed(1)} s</output></div>
+      <div class="ctrl"><span>Duración</span><input type="range" id="largo" min="1" max="${tope}" step="0.5" value="${E.largo}"><output id="oLargo">${E.largo} s</output></div>
+      <div class="ctrl"><span>Sonido</span>${seg('sonido', [[true, '🔊 Con sonido'], [false, '🔇 Mudo']], E.sonido)}</div>` : ''}
+    <div class="acciones">
+      <button class="btn chico" id="bOtro" type="button">↩︎ Otro</button>
+      <button class="btn verde" id="bCrear" type="button">✨ Crear sticker</button>
+    </div>`;
+
+  document.querySelectorAll('[data-seg]').forEach((g) => g.onclick = (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    const k = g.dataset.seg, v = b.dataset.v;
+    E[k] = v === 'true' ? true : v === 'false' ? false : v;
+    g.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+    if (k === 'llenar') $('lienzo').classList.toggle('llenar', E.llenar);
+    if (k === 'pos') dibujarTexto();
+    if (k === 'sonido') pasoEditar();
+  });
+  $('texto').oninput = (e) => { E.texto = e.target.value; dibujarTexto(); };
+  $('bOtro').onclick = pasoVacio;
+  $('bCrear').onclick = crear;
+  if (esVideo) {
+    const v = $('fuente');
+    const ir = () => { try { v.currentTime = E.desde; } catch {} };
+    v.onloadedmetadata = ir;
+    v.ontimeupdate = () => { if (v.currentTime > E.desde + E.largo || v.currentTime < E.desde - 0.2) ir(); };
+    $('desde').oninput = (e) => { E.desde = +e.target.value; $('oDesde').textContent = E.desde.toFixed(1) + ' s'; ir(); };
+    $('largo').oninput = (e) => { E.largo = +e.target.value; $('oLargo').textContent = E.largo + ' s'; };
+  }
+  dibujarTexto();
+}
+
+// El texto se dibuja en el navegador (con la letra de los memes) y se manda como imagen transparente
+function dibujarTexto() {
+  const c = $('capa'); if (!c) return null;
+  const x = c.getContext('2d');
+  x.clearRect(0, 0, 512, 512);
+  const t = (E.texto || '').trim().toUpperCase();
+  if (!t) return null;
+  let tam = 78;
+  const fuente = (n) => `900 ${n}px Impact, "Arial Black", "Segoe UI Black", sans-serif`;
+  x.font = fuente(tam);
+  while (x.measureText(t).width > 480 && tam > 30) x.font = fuente(--tam);
+  x.textAlign = 'center'; x.lineJoin = 'round';
+  x.textBaseline = E.pos === 'arriba' ? 'top' : 'bottom';
+  const y = E.pos === 'arriba' ? 18 : 494;
+  x.lineWidth = Math.max(6, tam / 7); x.strokeStyle = '#000'; x.strokeText(t, 256, y);
+  x.fillStyle = '#fff'; x.fillText(t, 256, y);
+  return c.toDataURL('image/png');
+}
+
+async function cargarArchivo(f) {
+  if (!f) return;
+  if (!/^(image|video)\//.test(f.type)) return tostada('Eso no es ni foto ni video 🤨');
+  if (f.size > 20 * 1024 * 1024) return tostada('Muy pesado: máximo 20 MB');
+  $('paso').innerHTML = `<div class="cargando"><span class="gira">🍭</span><br>Subiendo…</div>`;
+  try {
+    const r = await fetch('/api/subir', { method: 'POST', headers: { 'Content-Type': f.type }, body: f });
+    const d = await r.json(); if (!r.ok) throw new Error(d.error);
+    if (E.url) URL.revokeObjectURL(E.url);
+    Object.assign(E, { id: d.id, tipo: d.tipo, url: URL.createObjectURL(f), desde: 0, resultado: null, dur: 0 });
+    if (d.tipo === 'video') {
+      E.dur = await new Promise((ok) => { const v = document.createElement('video'); v.preload = 'metadata'; v.onloadedmetadata = () => ok(v.duration || 0); v.onerror = () => ok(0); v.src = E.url; });
+    }
+    pasoEditar();
+  } catch (e) { tostada(e.message || 'No pude subirlo'); pasoVacio(); }
+}
+
+async function crear() {
+  const texto = dibujarTexto();
+  const opciones = { id: E.id, llenar: E.llenar, texto, inicio: E.desde, segundos: E.largo, sonido: E.tipo === 'video' && E.sonido };
+  $('paso').innerHTML = `<div class="cargando"><span class="gira">🍭</span><br>Cocinando tu sticker…</div>`;
   escribiendo = true; pintarEstado();
   try {
-    const r = await fetch('/api/probar?modo=' + (conSonido ? 'ss' : 's'), { method: 'POST', headers: { 'Content-Type': f.type || 'application/octet-stream' }, body: f });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.error || 'No pude convertirlo');
-    const webp = 'data:image/webp;base64,' + d.webp;
-    const datos = [`${d.kb} KB`, d.segundos ? `${d.segundos.toFixed(1)} s` : '', d.recortado ? 'recortado' : ''].filter(Boolean).join(' · ');
-    zona.insertAdjacentHTML('beforeend', `<div class="sticker bot"><img src="${webp}" alt="sticker">
+    const r = await fetch('/api/crear', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(opciones) });
+    const d = await r.json(); if (!r.ok) throw new Error(d.error);
+    E.resultado = d;
+    pasoResultado();
+  } catch (e) { tostada(e.message || 'No pude crearlo'); pasoEditar(); }
+  finally { escribiendo = false; pintarEstado(); }
+}
+
+function pasoResultado() {
+  const d = E.resultado, src = 'data:image/webp;base64,' + d.webp;
+  const conectado = estado.bot === 'conectado';
+  $('paso').innerHTML = `<div class="resultado">
+      <img src="${src}" alt="sticker">
       ${d.audio ? `<audio controls src="data:audio/ogg;base64,${d.audio}"></audio>` : ''}
-      <div class="pie">${datos} · <a href="${webp}" download="sticker.webp">descargar</a> · ${hora()}</div></div>`);
-    if (d.sinSonido) zona.insertAdjacentHTML('beforeend', burbuja('<p>Ojo: ese video no tiene sonido, te lo hice mudo 🔇</p>', { tics: false }));
+      <div class="datos">${d.kb} KB${d.animado ? ` · ${d.segundos.toFixed(1)} s` : ' · estático'}${d.audio ? ' · con sonido 🔊' : ''}${d.sinSonido ? ' · el video no tenía sonido 🔇' : ''}</div>
+    </div>
+    <div class="acciones">
+      <button class="btn chico" id="bEditar" type="button">✏️ Editar</button>
+      <a class="btn chico" href="${src}" download="sticker.webp" style="text-decoration:none;text-align:center">⬇️</a>
+      <button class="btn verde" id="bMandar" type="button" ${conectado ? '' : 'disabled title="Conectá el bot primero"'}>📲 Mandármelo</button>
+    </div>
+    ${conectado ? '' : '<div class="consejo">Para mandarlo a WhatsApp, primero vinculá el bot (arriba). Mientras, podés descargarlo.</div>'}`;
+  $('bEditar').onclick = pasoEditar;
+  $('bMandar').onclick = mandar;
+  if (!galeria.some((g) => g.id === d.id)) { galeria.unshift({ id: d.id, src }); galeria = galeria.slice(0, 12); pintarGaleria(); }
+}
+
+async function mandar(idCreado) {
+  const id = typeof idCreado === 'string' ? idCreado : E.resultado?.id;
+  const boton = $('bMandar');
+  if (boton && typeof idCreado !== 'string') { boton.disabled = true; boton.textContent = 'Mandando…'; }
+  try {
+    const d = await api('/api/enviar', { id });
+    tostada(d.conSonido ? '¡Listo! Mandado con sonido 🔊' : '¡Listo! Ya está en tu WhatsApp ✓');
+    if (boton && typeof idCreado !== 'string') {
+      boton.textContent = '✓ Mandado';
+      if (!document.querySelector('#paso .consejo')) $('paso').insertAdjacentHTML('beforeend',
+        `<div class="consejo">💡 Abrí <b>Mensaje para mí</b> en WhatsApp, mantené apretado el sticker y tocá <b>⭐ Favoritos</b>: así lo tenés a mano en todos tus chats.</div>`);
+    }
   } catch (e) {
-    zona.insertAdjacentHTML('beforeend', burbuja(`<p>Uh, no pude 😓 ${esc(e.message)}</p>`, { tics: false }));
-  } finally {
-    escribiendo = false; pintarEstado(); setTimeout(alFondo, 50);
+    tostada(e.message);
+    if (boton && typeof idCreado !== 'string') { boton.disabled = false; boton.textContent = '📲 Mandármelo'; }
   }
 }
+
+function pintarGaleria() {
+  if (!galeria.length) { $('galeriaMsj').innerHTML = ''; return; }
+  $('galeriaMsj').innerHTML = `<div class="msj bot sigue"><p style="font-size:13px;color:var(--suave)">Tus creaciones de hoy (tocá una para volver a mandarla):</p>
+    <div class="galeria">${galeria.map((g) => `<img src="${g.src}" data-id="${g.id}" title="Mandar de nuevo">`).join('')}</div></div>`;
+  $('galeriaMsj').querySelectorAll('img').forEach((i) => i.onclick = () => {
+    if (estado.bot !== 'conectado') return tostada('Conectá el bot primero');
+    mandar(i.dataset.id);
+  });
+}
+
+archivo.onchange = () => { cargarArchivo(archivo.files[0]); archivo.value = ''; };
+chat.ondragover = (e) => { e.preventDefault(); $('soltar')?.classList.add('encima'); };
+chat.ondragleave = () => $('soltar')?.classList.remove('encima');
+chat.ondrop = (e) => { e.preventDefault(); $('soltar')?.classList.remove('encima'); cargarArchivo(e.dataTransfer.files[0]); };
+document.addEventListener('paste', (e) => { const f = [...(e.clipboardData?.files || [])][0]; if (f) cargarArchivo(f); });
+pasoVacio();
 
 // ---------- Conexión con el panel ----------
 function conectar() {
@@ -438,7 +591,10 @@ function conectar() {
     $('auto').checked = d.autoarranque;
     if (!d.esWindows) $('auto').closest('.fila').style.display = 'none';
   });
-  es.addEventListener('estado', (ev) => { estado = JSON.parse(ev.data); pintarEstado(); });
+  es.addEventListener('estado', (ev) => {
+    const antes = estado.bot; estado = JSON.parse(ev.data); pintarEstado();
+    if (antes !== estado.bot && E.resultado && $('bMandar') && !$('bMandar').textContent.includes('Mandado')) pasoResultado();
+  });
   es.addEventListener('log', (ev) => linea(JSON.parse(ev.data)));
   es.addEventListener('hecho', (ev) => { historial.unshift(JSON.parse(ev.data)); pintarActividad(); });
   es.addEventListener('config', (ev) => { cargarForm(JSON.parse(ev.data)); pintarEstado(); });

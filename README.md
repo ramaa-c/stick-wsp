@@ -24,7 +24,10 @@ El bot queda vinculado a **tu** WhatsApp. ffmpeg ya viene incluido, no hace falt
 ## El panel
 - **Conexión:** muestra el QR (o el código de vinculación) y el estado del bot.
 - **Actividad:** cuántos stickers se hicieron y para quién.
-- **Probar sin WhatsApp:** soltás una imagen o video y ves cómo queda el sticker (y escuchás el audio).
+- **Fábrica de stickers:** soltás una foto o video, elegís encuadre (completo o llenar), le ponés texto,
+  elegís el tramo del video y si va con sonido. Ves cómo queda y con **📲 Mandármelo** el bot te lo manda
+  a tu chat "Mensaje para mí". Desde ahí lo mantenés apretado → ⭐ Favoritos y lo tenés en todos tus chats.
+  También podés pegar una imagen con Ctrl+V.
 - **Registro:** lo que va haciendo el bot (también se guarda en `bot.log`).
 - **Configuración:** prefijo, autor, duraciones, antispam, etc. Al guardar, el bot se reinicia solo.
 - **Sistema:** iniciar con Windows, desvincular WhatsApp, apagar todo.

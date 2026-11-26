@@ -9,7 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import makeWASocket, {
   Browsers, DisconnectReason, downloadMediaMessage, fetchLatestBaileysVersion,
-  normalizeMessageContent, useMultiFileAuthState,
+  jidNormalizedUser, normalizeMessageContent, useMultiFileAuthState,
 } from '@whiskeysockets/baileys';
 import pino from 'pino';
 import qrcode from 'qrcode-terminal';
@@ -405,7 +405,42 @@ function apagar() {
   setTimeout(() => process.exit(0), 500);
 }
 process.on('SIGINT', apagar);
-process.on('message', (m) => { if (m?.tipo === 'apagar') apagar(); });
+process.on('message', (m) => {
+  if (m?.tipo === 'apagar') apagar();
+  if (m?.tipo === 'enviar') enviarDesdePanel(m);
+});
+
+// El panel pide mandar un sticker creado en el estudio a tu propio chat ("Mensaje para mí")
+async function enviarDesdePanel({ id, webp, audio, duracionMs }) {
+  const responderPanel = (datos) => avisar('enviado', { id, ...datos });
+  try {
+    if (!sock?.user?.id) return responderPanel({ ok: false, error: 'El bot no está conectado a WhatsApp.' });
+    const yo = jidNormalizedUser(sock.user.id);
+    const bufWebp = Buffer.from(webp, 'base64');
+    if (audio) {
+      try {
+        const idMsj = await enviarStickerConSonido(sock, yo, { webp: bufWebp, audio: Buffer.from(audio, 'base64'), duracionMs });
+        enviadosPorElBot.add(idMsj);
+        log('Sticker con sonido enviado desde el estudio a tu chat.');
+        avisar('hecho', { clase: 'con sonido', chat: yo });
+        return responderPanel({ ok: true, conSonido: true });
+      } catch (e) {
+        log('No se pudo mandar con sonido desde el estudio, mando sticker + audio:', e?.message || e);
+        await enviar(yo, { sticker: bufWebp });
+        await enviar(yo, { audio: Buffer.from(audio, 'base64'), mimetype: 'audio/ogg; codecs=opus', ptt: true, seconds: Math.ceil(duracionMs / 1000) });
+        avisar('hecho', { clase: 'sticker + audio aparte', chat: yo });
+        return responderPanel({ ok: true, conSonido: false });
+      }
+    }
+    await enviar(yo, { sticker: bufWebp });
+    log('Sticker enviado desde el estudio a tu chat.');
+    avisar('hecho', { clase: 'estudio', chat: yo });
+    responderPanel({ ok: true });
+  } catch (e) {
+    log('Error mandando el sticker del estudio:', e?.message || e);
+    responderPanel({ ok: false, error: e?.message || 'No se pudo mandar.' });
+  }
+}
 process.on('SIGTERM', apagar);
 
 avisar('estado', { estado: 'iniciando' });
