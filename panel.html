@@ -191,6 +191,9 @@
   .recorte .fila2 { display: flex; align-items: center; gap: 10px; margin: 4px 0; }
   .recorte .fila2 span { width: 62px; }
   .recorte input[type=range] { flex: 1; accent-color: var(--verde-vivo); }
+  .recorte output { width: 44px; text-align: right; font-variant-numeric: tabular-nums; color: #e9edef; }
+  #filaVolumen.alto output { color: #ffb648; }
+  #filaVolumen.mudo { opacity: .4; pointer-events: none; }
   .recorte .tramo { text-align: center; color: #e9edef; font-weight: 600; margin-bottom: 4px; font-variant-numeric: tabular-nums; }
   .ed-pie { display: flex; align-items: center; gap: 8px; padding: 10px; }
   .ed-pie .texto {
@@ -302,8 +305,9 @@
       </div>
       <div class="recorte" id="recorte">
         <div class="tramo" id="tramo"></div>
-        <div class="fila2"><span>Desde</span><input type="range" id="desde" min="0" step="0.1"></div>
-        <div class="fila2"><span>Duración</span><input type="range" id="largo" min="1" step="0.5"></div>
+        <div class="fila2"><span>Desde</span><input type="range" id="desde" min="0" step="0.1"><output id="oDesde">0:00</output></div>
+        <div class="fila2"><span>Duración</span><input type="range" id="largo" min="1" step="0.5"><output id="oLargo">6 s</output></div>
+        <div class="fila2" id="filaVolumen"><span>Volumen</span><input type="range" id="volumen" min="0" max="300" step="5" value="100"><output id="oVolumen">100%</output></div>
       </div>
     </div>
     <div class="ed-pie">
@@ -527,7 +531,7 @@ function urlDeBase64(b64, tipo) {
 
 // ---------- Editor ----------
 const archivo = $('archivo'), chat = $('chat');
-const E = { id: null, tipo: null, url: null, dur: 0, llenar: false, texto: '', pos: 'abajo', desde: 0, largo: 6, sonido: true, mudoForzado: false };
+const E = { id: null, tipo: null, url: null, dur: 0, llenar: false, texto: '', pos: 'abajo', desde: 0, largo: 6, sonido: true, mudoForzado: false, volumen: 1 };
 const abrirSelector = () => archivo.click();
 $('bAdjuntar').onclick = abrirSelector; $('campo').onclick = abrirSelector; $('bCamara').onclick = abrirSelector;
 
@@ -539,7 +543,8 @@ async function abrirEditor(f) {
   if (!/^(image|video)\//.test(f.type)) return tostada('Eso no es ni foto ni video 🤨');
   if (f.size > 20 * 1024 * 1024) return tostada('Muy pesado: máximo 20 MB');
   if (E.url) URL.revokeObjectURL(E.url);
-  Object.assign(E, { id: null, tipo: f.type.startsWith('video') || f.type === 'image/gif' ? 'video' : 'imagen', url: URL.createObjectURL(f), dur: 0, desde: 0, texto: '', mudoForzado: false });
+  Object.assign(E, { id: null, tipo: f.type.startsWith('video') || f.type === 'image/gif' ? 'video' : 'imagen', url: URL.createObjectURL(f), dur: 0, desde: 0, texto: '', mudoForzado: false, volumen: 1 });
+  $('volumen').value = 100; pintarVolumen();
   E.largo = Math.min(6, topeSeg());
   $('edTextoInput').value = '';
   $('edEnviar').disabled = true;
@@ -548,6 +553,7 @@ async function abrirEditor(f) {
   if (E.tipo === 'video' && f.type !== 'image/gif') {
     caja.innerHTML = `<video class="fuente" id="fuente" src="${E.url}" playsinline loop></video>`;
     const v = $('fuente');
+    conectarVolumen(v);
     v.onloadedmetadata = () => { E.dur = v.duration || 0; prepararRecorte(); irAlTramo(); reproducirPrevia(); };
     v.ontimeupdate = () => { if (v.currentTime > E.desde + E.largo || v.currentTime < E.desde - 0.25) irAlTramo(); };
   } else {
@@ -582,7 +588,35 @@ function pintarHerramientas() {
   const v = $('fuente');
   if (v?.tagName === 'VIDEO') { v.muted = !E.sonido || E.mudoForzado; }
   $('lienzo').classList.toggle('mudo-forzado', E.sonido && E.mudoForzado);
+  pintarVolumen();
 }
+
+// Volumen de la vista previa: pasa por Web Audio para poder subirlo más de 100% (igual que el sticker final)
+let ctxAudio = null, ganancia = null;
+function conectarVolumen(v) {
+  try {
+    ctxAudio = ctxAudio || new (window.AudioContext || window.webkitAudioContext)();
+    const fuente = ctxAudio.createMediaElementSource(v);
+    ganancia = ctxAudio.createGain();
+    const limitador = ctxAudio.createDynamicsCompressor(); // como el limitador del sticker final
+    limitador.threshold.value = -1; limitador.knee.value = 0; limitador.ratio.value = 20;
+    fuente.connect(ganancia).connect(limitador).connect(ctxAudio.destination);
+    ganancia.gain.value = E.volumen;
+  } catch { ganancia = null; }
+}
+function pintarVolumen() {
+  const pct = Math.round(E.volumen * 100);
+  $('oVolumen').textContent = pct + '%';
+  $('filaVolumen').classList.toggle('alto', pct > 100);
+  $('filaVolumen').classList.toggle('mudo', !E.sonido);
+  if (ganancia) ganancia.gain.value = E.volumen;
+  else if ($('fuente')?.tagName === 'VIDEO') $('fuente').volume = Math.min(1, E.volumen);
+}
+$('volumen').oninput = (e) => {
+  E.volumen = +e.target.value / 100; pintarVolumen();
+  ctxAudio?.resume();
+  const v = $('fuente'); if (v?.tagName === 'VIDEO' && E.mudoForzado) { E.mudoForzado = false; pintarHerramientas(); v.play(); }
+};
 
 function prepararRecorte() {
   const tope = topeSeg();
@@ -595,6 +629,7 @@ function prepararRecorte() {
 function pintarTramo() {
   const fin = Math.min(E.dur || E.desde + E.largo, E.desde + E.largo);
   $('tramo').textContent = `✂️ ${mmss(E.desde)} → ${mmss(fin)} · ${(fin - E.desde).toFixed(1)} s`;
+  $('oDesde').textContent = mmss(E.desde); $('oLargo').textContent = E.largo + ' s';
 }
 function irAlTramo() { const v = $('fuente'); try { v.currentTime = E.desde; } catch {} }
 
@@ -602,12 +637,14 @@ function irAlTramo() { const v = $('fuente'); try { v.currentTime = E.desde; } c
 function reproducirPrevia() {
   const v = $('fuente'); if (v?.tagName !== 'VIDEO') return;
   v.muted = !E.sonido;
+  ctxAudio?.resume();
   v.play().then(() => { E.mudoForzado = false; $('lienzo').classList.remove('pausa'); pintarHerramientas(); })
     .catch(() => { v.muted = true; E.mudoForzado = E.sonido; v.play().catch(() => $('lienzo').classList.add('pausa')); pintarHerramientas(); });
 }
 
 $('lienzo').onclick = () => {
   const v = $('fuente'); if (v?.tagName !== 'VIDEO') return;
+  ctxAudio?.resume();
   if (E.mudoForzado) { E.mudoForzado = false; pintarHerramientas(); v.play(); return; }
   if (v.paused) { v.play(); $('lienzo').classList.remove('pausa'); } else { v.pause(); $('lienzo').classList.add('pausa'); }
 };
@@ -647,7 +684,7 @@ async function crearYMandar() {
   if (!E.id) return;
   const opciones = {
     id: E.id, llenar: E.llenar, texto: dibujarTexto(), inicio: E.desde, segundos: E.largo,
-    sonido: E.tipo === 'video' && E.sonido,
+    sonido: E.tipo === 'video' && E.sonido, volumen: E.volumen,
   };
   cerrarEditor();
 

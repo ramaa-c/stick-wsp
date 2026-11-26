@@ -95,10 +95,11 @@ export async function imagenASticker(buffer, { llenar = false, texto = null } = 
 
 /**
  * Video o GIF -> sticker animado (y opcionalmente su audio, del mismo tramo).
- * Opciones: maxSegundos, conAudio, inicio (segundo desde donde empieza), llenar, texto (PNG).
+ * Opciones: maxSegundos, conAudio, inicio (segundo desde donde empieza), llenar, texto (PNG),
+ * volumen (1 = original, 0.5 = la mitad, 2 = el doble; hasta 3).
  * Devuelve { webp, audio, duracionMs, recortado, duracionVideo }.
  */
-export async function videoASticker(buffer, { maxSegundos = 8, conAudio = false, inicio = 0, llenar = false, texto = null } = {}) {
+export async function videoASticker(buffer, { maxSegundos = 8, conAudio = false, inicio = 0, llenar = false, texto = null, volumen = 1 } = {}) {
   return conCarpeta(async (dir) => {
     const entrada = path.join(dir, 'entrada');
     const capa = path.join(dir, 'texto.png');
@@ -129,7 +130,7 @@ export async function videoASticker(buffer, { maxSegundos = 8, conAudio = false,
     if (webp.length > MAX_ANIMADO) throw new ErrorConversion('El video es demasiado complejo para un sticker. Probá con uno más corto.');
 
     let audio = null;
-    if (conAudio && info.tieneAudio) audio = await extraerDe(entrada, dir, segundos, desde);
+    if (conAudio && info.tieneAudio) audio = await extraerDe(entrada, dir, segundos, desde, volumen);
 
     return {
       webp,
@@ -141,13 +142,23 @@ export async function videoASticker(buffer, { maxSegundos = 8, conAudio = false,
   });
 }
 
-async function extraerDe(entrada, dir, segundos, desde = 0) {
+// Volumen elegido + limitador (para que al subirlo no se sature) + fundido al final
+function filtroAudio(volumen, finFundido) {
+  const v = Math.max(0, Math.min(3, Number(volumen) || 0));
+  const partes = [];
+  if (Math.abs(v - 1) > 0.01) partes.push(`volume=${v.toFixed(2)}`);
+  if (v > 1) partes.push('alimiter=limit=0.95:level=disabled');
+  partes.push(`afade=t=out:st=${finFundido}:d=0.15`);
+  return partes.join(',');
+}
+
+async function extraerDe(entrada, dir, segundos, desde = 0, volumen = 1) {
   const salida = path.join(dir, 'audio.ogg');
   const finFundido = Math.max(0, segundos - 0.15).toFixed(3);
   for (const kbps of [64, 48, 32]) {
     try {
       await correr(['-ss', desde.toFixed(3), '-t', segundos.toFixed(3), '-i', entrada, '-vn', '-map', '0:a:0',
-        '-af', `afade=t=out:st=${finFundido}:d=0.15`,
+        '-af', filtroAudio(volumen, finFundido),
         '-c:a', 'libopus', '-b:a', `${kbps}k`, '-ac', '1', '-ar', '48000',
         '-application', 'audio', '-map_metadata', '-1', '-f', 'ogg', salida]);
     } catch (e) {

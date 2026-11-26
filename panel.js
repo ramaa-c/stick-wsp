@@ -293,6 +293,7 @@ const servidor = http.createServer(async (req, res) => {
           r = await videoASticker(subido.buffer, {
             maxSegundos: Math.max(1, Math.min(tope, Number(o.segundos) || tope)),
             conAudio: !!o.sonido, inicio: Number(o.inicio) || 0, llenar: !!o.llenar, texto,
+            volumen: o.volumen === undefined ? 1 : Number(o.volumen),
           });
         } else {
           r = { webp: await imagenASticker(subido.buffer, { llenar: !!o.llenar, texto }), audio: null, duracionMs: 0 };
