@@ -112,51 +112,109 @@
   .sticker .pie a { color: var(--tilde); text-decoration: none; font-weight: 600; }
   .sticker audio { width: 190px; height: 34px; margin-top: 4px; }
 
-  /* ---------- Estudio ---------- */
-  .estudio { background: var(--bot); border-radius: 14px; box-shadow: var(--sombra); padding: 14px; margin: 6px 0; animation: entrar .18s ease-out; }
-  .estudio h2 { font-size: 15px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
-  .estudio h2 small { font-weight: 400; color: var(--suave); font-size: 12.5px; margin-left: auto; }
-  .soltar {
-    border: 2px dashed color-mix(in srgb, var(--verde-vivo) 55%, transparent); border-radius: 14px; padding: 26px 14px; text-align: center;
-    cursor: pointer; color: var(--suave); transition: background .15s;
+
+  /* ---------- Scrollbar propia ---------- */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--verde-vivo) 45%, transparent); border-radius: 10px;
+    border: 3px solid transparent; background-clip: padding-box; min-height: 40px;
   }
-  .soltar:hover, .soltar.encima { background: color-mix(in srgb, var(--verde-vivo) 9%, transparent); }
-  .soltar .grande { font-size: 44px; display: block; margin-bottom: 6px; }
-  .soltar b { color: var(--texto); display: block; font-size: 15.5px; margin-bottom: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background-color: var(--verde-vivo); border-width: 2px; }
+  ::-webkit-scrollbar-corner { background: transparent; }
+  @supports not selector(::-webkit-scrollbar) {
+    * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--verde-vivo) 55%, transparent) transparent; }
+  }
+
+  /* ---------- Stickers en el chat ---------- */
+  .stk { align-self: flex-end; text-align: right; max-width: 220px; animation: entrar .2s ease-out; }
+  .stk .marco { position: relative; width: 180px; height: 180px; display: inline-block; cursor: default; }
+  .stk.suena .marco { cursor: pointer; }
+  .stk img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,.2)); animation: pop .35s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes pop { from { transform: scale(.5) rotate(-8deg); opacity: 0; } }
+  .stk .parlante {
+    position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; border-radius: 50%; border: 0;
+    background: rgba(0,0,0,.55); color: #fff; font-size: 14px; display: grid; place-items: center; cursor: pointer;
+  }
+  .stk.sonando .parlante { background: var(--verde-vivo); animation: latido .6s ease-in-out infinite alternate; }
+  @keyframes latido { to { transform: scale(1.15); } }
+  .stk .cocinando { width: 180px; height: 180px; display: grid; place-items: center; font-size: 46px; border-radius: 14px; background: color-mix(in srgb, var(--yo) 70%, transparent); }
+  .stk .cocinando span { animation: gira 1s linear infinite; }
+  @keyframes gira { to { transform: rotate(360deg); } }
+  .stk .pie { display: inline-flex; align-items: center; gap: 8px; background: var(--chip); border-radius: 8px; padding: 2px 8px; font-size: 11.5px; color: var(--suave); box-shadow: var(--sombra); margin-top: 2px; }
+  .stk .pie a, .stk .pie button { color: var(--suave); text-decoration: none; background: none; border: 0; padding: 0; font: inherit; cursor: pointer; }
+  .stk .pie a:hover, .stk .pie button:hover { color: var(--texto); }
+  .tic.reloj { letter-spacing: 0; color: var(--suave); }
+  .tic.error { color: #e5484d; letter-spacing: 0; }
+
+  /* ---------- Barra de escribir ---------- */
+  .barra { background: var(--barra); display: flex; align-items: center; gap: 8px; padding: 9px 10px; z-index: 2; }
+  .barra .icono { color: var(--suave); font-size: 21px; }
+  .barra .icono:hover { background: rgba(127,127,127,.12); }
+  .campo {
+    flex: 1; background: var(--campo); border-radius: 22px; padding: 11px 16px; color: var(--suave); cursor: pointer;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; user-select: none;
+  }
+  .redondo { width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--verde-vivo); color: #fff; font-size: 19px; cursor: pointer; flex: none; display: grid; place-items: center; }
+  .redondo:active { transform: scale(.94); }
+  .redondo:disabled { opacity: .5; }
+  .chat.encima { outline: 3px dashed var(--verde-vivo); outline-offset: -10px; }
+
+  /* ---------- Editor (como cuando elegís una foto en WhatsApp) ---------- */
+  .editor {
+    position: absolute; inset: 0; z-index: 7; background: #0b141a; color: #e9edef; display: none; flex-direction: column;
+  }
+  .editor.abierto { display: flex; animation: subir .2s ease-out; }
+  @keyframes subir { from { transform: translateY(24px); opacity: 0; } }
+  .ed-top { display: flex; align-items: center; gap: 6px; padding: 10px 10px; }
+  .ed-top .espacio { flex: 1; }
+  .herr {
+    height: 38px; min-width: 38px; padding: 0 12px; border-radius: 19px; border: 0; background: rgba(255,255,255,.1); color: #fff;
+    font: 600 13px/1 "Segoe UI", system-ui, sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .herr:hover { background: rgba(255,255,255,.18); }
+  .herr.on { background: var(--verde-vivo); color: #04361f; }
+  .herr.solo { padding: 0; width: 38px; justify-content: center; font-size: 18px; }
+  .ed-centro { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 6px 18px; min-height: 0; }
   .lienzo {
-    width: 256px; height: 256px; margin: 0 auto 12px; border-radius: 12px; overflow: hidden; position: relative;
-    background: repeating-conic-gradient(rgba(127,127,127,.18) 0 25%, transparent 0 50%) 0 0/20px 20px;
+    width: min(340px, 78vw, 48vh); aspect-ratio: 1; border-radius: 14px; overflow: hidden; position: relative; flex: none;
+    background: repeating-conic-gradient(#ffffff14 0 25%, transparent 0 50%) 0 0/22px 22px; cursor: pointer;
   }
-  .lienzo img, .lienzo video, .lienzo canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .lienzo .fuente, .lienzo canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   .lienzo .fuente { object-fit: contain; }
   .lienzo.llenar .fuente { object-fit: cover; }
-  .ctrl { display: flex; align-items: center; gap: 10px; margin: 9px 0; font-size: 13.5px; }
-  .ctrl > span:first-child { width: 78px; color: var(--suave); flex: none; }
-  .ctrl input[type=text] { flex: 1; font: inherit; color: var(--texto); background: var(--barra); border: 0; border-radius: 8px; padding: 8px 10px; }
-  .ctrl input[type=range] { flex: 1; accent-color: var(--verde-vivo); }
-  .ctrl output { width: 42px; text-align: right; font-variant-numeric: tabular-nums; color: var(--suave); }
-  .seg { display: inline-flex; background: var(--barra); border-radius: 9px; padding: 3px; gap: 2px; }
-  .seg button { border: 0; background: none; color: var(--suave); font: inherit; font-size: 13px; padding: 5px 11px; border-radius: 7px; cursor: pointer; }
-  .seg button.on { background: var(--bot); color: var(--texto); box-shadow: var(--sombra); font-weight: 600; }
-  .acciones { display: flex; gap: 8px; margin-top: 12px; }
-  .btn { flex: 1; border: 0; border-radius: 22px; padding: 11px 12px; font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer; background: var(--barra); color: var(--texto); }
-  .btn.verde { background: var(--verde-vivo); color: #04361f; }
-  .btn:disabled { opacity: .5; cursor: default; }
-  .btn.chico { flex: none; font-weight: 600; padding: 11px 14px; }
-  .resultado { text-align: center; }
-  .resultado img { width: 200px; height: 200px; object-fit: contain; filter: drop-shadow(0 3px 6px rgba(0,0,0,.25)); animation: pop .35s cubic-bezier(.2,1.6,.4,1); }
-  @keyframes pop { from { transform: scale(.5) rotate(-8deg); opacity: 0; } }
-  .resultado audio { display: block; margin: 6px auto 0; height: 34px; }
-  .resultado .datos { font-size: 12px; color: var(--suave); margin-top: 4px; }
-  .consejo { font-size: 12.5px; color: var(--suave); background: var(--barra); border-radius: 10px; padding: 9px 11px; margin-top: 10px; line-height: 1.45; }
-  .cargando { text-align: center; padding: 30px 0; color: var(--suave); }
-  .cargando .gira { display: inline-block; font-size: 34px; animation: gira 1s linear infinite; }
-  @keyframes gira { to { transform: rotate(360deg); } }
-  .galeria { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 2px; }
-  .galeria img { width: 64px; height: 64px; object-fit: contain; border-radius: 8px; background: var(--barra); cursor: pointer; flex: none; }
-  .galeria img:hover { outline: 2px solid var(--verde-vivo); }
-  .estado-mini { display: flex; align-items: center; gap: 8px; }
+  .lienzo .play { position: absolute; inset: 0; display: none; place-items: center; font-size: 46px; background: rgba(0,0,0,.25); }
+  .lienzo.pausa .play { display: grid; }
+  .pista { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); background: rgba(0,0,0,.6); border-radius: 12px; padding: 4px 10px; font-size: 12px; white-space: nowrap; display: none; }
+  .lienzo.mudo-forzado .pista { display: block; }
+  .recorte { width: min(340px, 78vw); font-size: 12.5px; color: #aebac1; }
+  .recorte .fila2 { display: flex; align-items: center; gap: 10px; margin: 4px 0; }
+  .recorte .fila2 span { width: 62px; }
+  .recorte input[type=range] { flex: 1; accent-color: var(--verde-vivo); }
+  .recorte .tramo { text-align: center; color: #e9edef; font-weight: 600; margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+  .ed-pie { display: flex; align-items: center; gap: 8px; padding: 10px; }
+  .ed-pie .texto {
+    flex: 1; display: flex; align-items: center; gap: 6px; background: #2a3942; border-radius: 24px; padding: 4px 6px 4px 14px;
+  }
+  .ed-pie input { flex: 1; min-width: 0; background: none; border: 0; color: #e9edef; font: inherit; font-size: 15px; padding: 8px 0; }
+  .ed-pie input:focus { outline: none; }
+  .ed-pie input::placeholder { color: #8696a0; }
+  .ed-pie .pos { border: 0; background: rgba(255,255,255,.08); color: #e9edef; border-radius: 16px; padding: 6px 10px; font: 600 12px/1 inherit; cursor: pointer; white-space: nowrap; }
+  .ed-pie .redondo { width: 50px; height: 50px; font-size: 21px; }
+  .ed-destino { text-align: center; font-size: 12px; color: #8696a0; padding: 0 0 8px; }
 
+  /* ---------- Estadísticas (en Registro) ---------- */
+  .stats { padding: 12px 16px; }
+  .cifras { display: flex; gap: 8px; margin: 2px 0 8px; }
+  .cifra { flex: 1; text-align: center; background: rgba(127,127,127,.12); border-radius: 10px; padding: 8px 4px; }
+  .cifra b { display: block; font-size: 22px; line-height: 1.1; }
+  .cifra span { font-size: 11.5px; color: var(--suave); }
+  .ultimos { list-style: none; margin: 0; padding: 0; font-size: 13px; max-height: 170px; overflow-y: auto; }
+  .ultimos li { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; color: var(--suave); border-bottom: 1px solid var(--borde); }
+  .ultimos li:last-child { border-bottom: 0; }
+  .ultimos li span:first-child { color: var(--texto); }
+  #hojaRegistro .cuerpo { display: flex; flex-direction: column; }
+  #registro { flex: 1; min-height: 200px !important; }
   /* ---------- Hojas (configuración / registro) ---------- */
   .hoja {
     position: absolute; inset: 0; background: var(--fondo-chat); z-index: 8; display: flex; flex-direction: column;
@@ -205,8 +263,8 @@
 
   <div class="menu" id="menu">
     <button data-accion="config">⚙️ Info del bot</button>
-    <button data-accion="registro">📜 Ver registro</button>
-    <button data-accion="borrarHist">🧹 Vaciar chat (historial)</button>
+    <button data-accion="registro">📊 Registro y estadísticas</button>
+    <button data-accion="vaciar">🧽 Vaciar chat</button>
     <hr>
     <button data-accion="desvincular" class="rojo">🔌 Desvincular WhatsApp</button>
     <button data-accion="apagar" class="rojo">💤 Apagar todo</button>
@@ -216,16 +274,47 @@
     <div class="chip">Hoy</div>
     <div class="chip aviso">🔒 Los stickers de este chat están cifrados de punta a punta. Bueno… más o menos. Es un bot hecho en casa.</div>
     <div id="estadoMsj"></div>
-
-    <section class="estudio" id="estudio">
-      <h2>🍭 Fábrica de stickers <small id="estudioAyuda">se manda a tu “Mensaje para mí”</small></h2>
-      <div id="paso"></div>
-    </section>
-
-    <div id="galeriaMsj"></div>
-    <div id="actividadMsj"></div>
+    <div id="mensajes" style="display:contents"></div>
   </main>
-  <input type="file" id="archivo" accept="image/*,video/*" hidden>
+
+  <footer class="barra">
+    <button class="icono" id="bAdjuntar" title="Elegir foto o video">📎</button>
+    <div class="campo" id="campo">Mandame una foto o video para hacerlo sticker…</div>
+    <button class="redondo" id="bCamara" title="Elegir foto o video">🍭</button>
+    <input type="file" id="archivo" accept="image/*,video/*" hidden>
+  </footer>
+
+  <!-- Editor: aparece al elegir una foto o video, como en WhatsApp -->
+  <section class="editor" id="editor">
+    <div class="ed-top">
+      <button class="herr solo" id="edCerrar" title="Cancelar">✕</button>
+      <span class="espacio"></span>
+      <button class="herr" id="edEncuadre" title="Encuadre">⛶ Completo</button>
+      <button class="herr solo" id="edTexto" title="Agregar texto">Aa</button>
+      <button class="herr" id="edSonido" title="Sonido">🔊 Con sonido</button>
+    </div>
+    <div class="ed-centro">
+      <div class="lienzo" id="lienzo">
+        <div id="fuenteCaja"></div>
+        <canvas id="capa" width="512" height="512"></canvas>
+        <div class="play">▶</div>
+        <div class="pista">🔇 tocá para escucharlo</div>
+      </div>
+      <div class="recorte" id="recorte">
+        <div class="tramo" id="tramo"></div>
+        <div class="fila2"><span>Desde</span><input type="range" id="desde" min="0" step="0.1"></div>
+        <div class="fila2"><span>Duración</span><input type="range" id="largo" min="1" step="0.5"></div>
+      </div>
+    </div>
+    <div class="ed-pie">
+      <div class="texto">
+        <input type="text" id="edTextoInput" maxlength="40" placeholder="Agregá un texto al sticker…">
+        <button class="pos" id="edPos" title="Posición del texto">⬇ abajo</button>
+      </div>
+      <button class="redondo" id="edEnviar" title="Crear y mandar">➤</button>
+    </div>
+    <div class="ed-destino" id="edDestino">Se manda a tu chat “Mensaje para mí”</div>
+  </section>
 
   <!-- Hoja: configuración -->
   <section class="hoja" id="hojaConfig">
@@ -265,16 +354,20 @@
   <section class="hoja" id="hojaRegistro">
     <header class="cab">
       <button class="icono" data-cerrar>←</button>
-      <div class="quien"><b>Registro</b><small>lo que va haciendo el bot</small></div>
+      <div class="quien"><b>Registro</b><small>estadísticas y lo que va haciendo el bot</small></div>
       <button class="icono" id="bLimpiarLog" title="Limpiar vista">🧹</button>
     </header>
-    <div class="cuerpo"><div id="registro"></div></div>
+    <div class="cuerpo">
+      <div class="grupo stats" id="stats"></div>
+      <div id="registro"></div>
+    </div>
   </section>
 
   <div class="tostada" id="tostada"></div>
 </div>
 
 <script>
+
 const $ = (id) => document.getElementById(id);
 let estado = {}, historial = [], predeterminada = {}, config = {}, conSonido = false, escribiendo = false;
 const hora = (t = Date.now()) => new Date(t).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -317,7 +410,7 @@ function pintarEstado() {
 
   let html;
   if (on) {
-    html = burbuja(`<p>¡Ya estoy en línea! 😎 Creá un sticker acá abajo, o mandame en WhatsApp un video con <span class="cmd">${esc(P)}ss</span> (con sonido) o una foto con <span class="cmd">${esc(P)}s</span>.</p>`);
+    html = burbuja(`<p>¡Ya estoy en línea! 😎 Tocá 🍭 abajo para armar un sticker y te lo mando a tu WhatsApp.</p><p style="font-size:13px;color:var(--suave)">También funciona desde WhatsApp: un video con <span class="cmd">${esc(P)}ss</span> (con sonido) o una foto con <span class="cmd">${esc(P)}s</span>.</p>`);
   } else if (estado.codigo) {
     html = burbuja(`<p>Para vincularme, escribí este código en tu celu 👇</p><div class="codigo">${esc(estado.codigo)}</div>
       <ol class="pasos"><li>WhatsApp › <b>Dispositivos vinculados</b></li><li><b>Vincular dispositivo</b> › <b>con el número de teléfono</b></li><li>Poné el código y listo</li></ol>`, { tics: false });
@@ -336,25 +429,23 @@ function pintarEstado() {
   $('estadoMsj').innerHTML = html;
 }
 
-// ---------- Actividad ----------
+// ---------- Estadísticas (dentro de Registro) ----------
 function pintarActividad() {
   const hoy = new Date().toDateString();
   const buenos = historial.filter((h) => h.clase !== 'error');
   const deHoy = buenos.filter((h) => new Date(h.cuando).toDateString() === hoy);
   const sonido = deHoy.filter((h) => h.clase === 'con sonido').length;
-  const iconos = { 'con sonido': '🔊', animado: '🎞️', 'estático': '🖼️', audio: '🎵', 'sticker + audio aparte': '🔉', error: '⚠️' };
+  const iconos = { 'con sonido': '🔊', animado: '🎞️', 'estático': '🖼️', audio: '🎵', 'sticker + audio aparte': '🔉', estudio: '🍭', error: '⚠️' };
   let lista = '';
-  for (const h of historial.slice(0, 5)) {
+  for (const h of historial.slice(0, 40)) {
     const quien = h.chat ? (h.chat.length > 13 ? '…' + h.chat.slice(-6) : '+' + h.chat) : '';
     lista += `<li><span>${iconos[h.clase] || '•'} ${esc(h.clase)}${h.detalle ? ' · ' + esc(h.detalle.slice(0, 40)) : ''}</span><span>${esc(quien)} · ${hora(h.cuando)}</span></li>`;
   }
-  const texto = !buenos.length
-    ? '<p>Todavía no hice ningún sticker. ¡Estreno! 🎉</p>'
-    : `<p>${deHoy.length ? `Hoy ya llevo <b>${deHoy.length}</b> sticker${deHoy.length > 1 ? 's' : ''} 💪` : 'Hoy todavía no hice nada 🥱'}</p>`;
-  $('actividadMsj').innerHTML = `<div class="msj bot sigue">${texto}
-    <div class="cifras"><div class="cifra"><b>${deHoy.length}</b><span>hoy</span></div>
-    <div class="cifra"><b>${sonido}</b><span>con sonido</span></div><div class="cifra"><b>${buenos.length}</b><span>en total</span></div></div>
-    ${lista ? `<ul class="ultimos">${lista}</ul>` : ''}<span class="hora">${hora()}</span></div>`;
+  $('stats').innerHTML = `<div class="cifras"><div class="cifra"><b>${deHoy.length}</b><span>hoy</span></div>
+    <div class="cifra"><b>${sonido}</b><span>con sonido hoy</span></div><div class="cifra"><b>${buenos.length}</b><span>en total</span></div></div>
+    ${lista ? `<ul class="ultimos">${lista}</ul>` : '<p style="color:var(--suave);font-size:13px;margin:4px 0">Todavía no se hizo ningún sticker.</p>'}
+    <button class="secundario" type="button" id="bBorrarStats" style="padding:8px 0 2px">🧹 Borrar estadísticas</button>`;
+  $('bBorrarStats').onclick = () => { if (confirm('¿Borrar las estadísticas?')) api('/api/historial/borrar').then(() => { historial = []; pintarActividad(); }); };
 }
 
 // ---------- Registro ----------
@@ -405,8 +496,8 @@ $('menu').onclick = (e) => {
   const a = e.target.closest('button')?.dataset.accion; if (!a) return;
   $('menu').classList.remove('abierto');
   if (a === 'config') abrir('hojaConfig');
-  if (a === 'registro') { abrir('hojaRegistro'); const c = $('registro').parentElement; c.scrollTop = c.scrollHeight; }
-  if (a === 'borrarHist' && confirm('¿Vaciar el historial de stickers?')) api('/api/historial/borrar').then(() => { historial = []; pintarActividad(); tostada('Chat vaciado 🧹'); });
+  if (a === 'registro') { abrir('hojaRegistro'); pintarActividad(); const c = $('registro').parentElement; c.scrollTop = c.scrollHeight; }
+  if (a === 'vaciar') { $('mensajes').innerHTML = ''; tostada('Chat vaciado 🧽'); }
   if (a === 'desvincular' && confirm('Esto desvincula el bot de tu WhatsApp y vas a tener que escanear el QR de nuevo. ¿Seguro?'))
     api('/api/cerrar-sesion').then(() => tostada('Desvinculado. Escaneá de nuevo 👀')).catch((err) => tostada(err.message));
   if (a === 'apagar' && confirm('¿Apagar el bot y el panel? Para volver, doble clic en "Iniciar bot".'))
@@ -416,70 +507,124 @@ $('bLimpiarLog').onclick = () => { $('registro').innerHTML = ''; };
 $('bPlay').onclick = () => api(corriendo() ? '/api/detener' : '/api/iniciar').catch((e) => tostada(e.message));
 $('bReiniciar').onclick = () => api('/api/reiniciar').then(() => tostada('Reiniciando… 🔄')).catch((e) => tostada(e.message));
 
-// ---------- Estudio de stickers ----------
+// ---------- Sonido: un solo reproductor para todo el chat ----------
+const reproductor = new Audio();
+let sonandoEl = null;
+reproductor.onended = () => { sonandoEl?.classList.remove('sonando'); sonandoEl = null; };
+function sonar(el, url) {
+  if (sonandoEl === el && !reproductor.paused) { reproductor.pause(); el.classList.remove('sonando'); sonandoEl = null; return; }
+  sonandoEl?.classList.remove('sonando');
+  reproductor.src = url; reproductor.currentTime = 0;
+  const img = el.querySelector('img'); if (img) { const s = img.src; img.src = ''; img.src = s; } // reinicia la animación
+  reproductor.play().then(() => { el.classList.add('sonando'); sonandoEl = el; })
+    .catch(() => tostada('Tu navegador no deja reproducir el audio 😕'));
+}
+function urlDeBase64(b64, tipo) {
+  const bin = atob(b64), bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return URL.createObjectURL(new Blob([bytes], { type: tipo }));
+}
+
+// ---------- Editor ----------
 const archivo = $('archivo'), chat = $('chat');
-const E = { id: null, tipo: null, url: null, dur: 0, llenar: false, texto: '', pos: 'abajo', desde: 0, largo: 6, sonido: true, resultado: null };
-let galeria = [];
+const E = { id: null, tipo: null, url: null, dur: 0, llenar: false, texto: '', pos: 'abajo', desde: 0, largo: 6, sonido: true, mudoForzado: false };
+const abrirSelector = () => archivo.click();
+$('bAdjuntar').onclick = abrirSelector; $('campo').onclick = abrirSelector; $('bCamara').onclick = abrirSelector;
 
-function pasoVacio() {
-  E.id = null; E.resultado = null;
-  if (E.url) URL.revokeObjectURL(E.url), E.url = null;
-  $('paso').innerHTML = `<div class="soltar" id="soltar"><span class="grande">🖼️🎬</span><b>Soltá una foto o un video acá</b>o tocá para elegir uno · videos con sonido = sticker que suena 🔊</div>`;
-  $('soltar').onclick = () => archivo.click();
-}
+const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+const topeSeg = () => (E.tipo === 'video' && E.sonido ? config.segundosSonido : config.segundosSticker) || 8;
 
-function seg(nombre, opciones, valor) {
-  return `<div class="seg" data-seg="${nombre}">${opciones.map(([v, t]) => `<button type="button" data-v="${v}" class="${String(v) === String(valor) ? 'on' : ''}">${t}</button>`).join('')}</div>`;
-}
+async function abrirEditor(f) {
+  if (!f) return;
+  if (!/^(image|video)\//.test(f.type)) return tostada('Eso no es ni foto ni video 🤨');
+  if (f.size > 20 * 1024 * 1024) return tostada('Muy pesado: máximo 20 MB');
+  if (E.url) URL.revokeObjectURL(E.url);
+  Object.assign(E, { id: null, tipo: f.type.startsWith('video') || f.type === 'image/gif' ? 'video' : 'imagen', url: URL.createObjectURL(f), dur: 0, desde: 0, texto: '', mudoForzado: false });
+  E.largo = Math.min(6, topeSeg());
+  $('edTextoInput').value = '';
+  $('edEnviar').disabled = true;
 
-function pasoEditar() {
-  const esVideo = E.tipo === 'video';
-  const tope = E.sonido ? (config.segundosSonido || 10) : (config.segundosSticker || 8);
-  E.largo = Math.min(E.largo, tope);
-  $('paso').innerHTML = `
-    <div class="lienzo ${E.llenar ? 'llenar' : ''}" id="lienzo">
-      ${esVideo ? `<video class="fuente" id="fuente" src="${E.url}" muted playsinline autoplay loop></video>` : `<img class="fuente" id="fuente" src="${E.url}">`}
-      <canvas id="capa" width="512" height="512"></canvas>
-    </div>
-    <div class="ctrl"><span>Encuadre</span>${seg('llenar', [[false, 'Completo'], [true, 'Llenar']], E.llenar)}</div>
-    <div class="ctrl"><span>Texto</span><input type="text" id="texto" maxlength="40" placeholder="opcional, ej: JAJAJA" value="${esc(E.texto)}"></div>
-    <div class="ctrl"><span></span>${seg('pos', [['arriba', 'Arriba'], ['abajo', 'Abajo']], E.pos)}</div>
-    ${esVideo ? `
-      <div class="ctrl"><span>Desde</span><input type="range" id="desde" min="0" max="${Math.max(0, E.dur - 0.5).toFixed(1)}" step="0.1" value="${E.desde}"><output id="oDesde">${E.desde.toFixed(1)} s</output></div>
-      <div class="ctrl"><span>Duración</span><input type="range" id="largo" min="1" max="${tope}" step="0.5" value="${E.largo}"><output id="oLargo">${E.largo} s</output></div>
-      <div class="ctrl"><span>Sonido</span>${seg('sonido', [[true, '🔊 Con sonido'], [false, '🔇 Mudo']], E.sonido)}</div>` : ''}
-    <div class="acciones">
-      <button class="btn chico" id="bOtro" type="button">↩︎ Otro</button>
-      <button class="btn verde" id="bCrear" type="button">✨ Crear sticker</button>
-    </div>`;
-
-  document.querySelectorAll('[data-seg]').forEach((g) => g.onclick = (e) => {
-    const b = e.target.closest('button'); if (!b) return;
-    const k = g.dataset.seg, v = b.dataset.v;
-    E[k] = v === 'true' ? true : v === 'false' ? false : v;
-    g.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
-    if (k === 'llenar') $('lienzo').classList.toggle('llenar', E.llenar);
-    if (k === 'pos') dibujarTexto();
-    if (k === 'sonido') pasoEditar();
-  });
-  $('texto').oninput = (e) => { E.texto = e.target.value; dibujarTexto(); };
-  $('bOtro').onclick = pasoVacio;
-  $('bCrear').onclick = crear;
-  if (esVideo) {
+  const caja = $('fuenteCaja');
+  if (E.tipo === 'video' && f.type !== 'image/gif') {
+    caja.innerHTML = `<video class="fuente" id="fuente" src="${E.url}" playsinline loop></video>`;
     const v = $('fuente');
-    const ir = () => { try { v.currentTime = E.desde; } catch {} };
-    v.onloadedmetadata = ir;
-    v.ontimeupdate = () => { if (v.currentTime > E.desde + E.largo || v.currentTime < E.desde - 0.2) ir(); };
-    $('desde').oninput = (e) => { E.desde = +e.target.value; $('oDesde').textContent = E.desde.toFixed(1) + ' s'; ir(); };
-    $('largo').oninput = (e) => { E.largo = +e.target.value; $('oLargo').textContent = E.largo + ' s'; };
+    v.onloadedmetadata = () => { E.dur = v.duration || 0; prepararRecorte(); irAlTramo(); reproducirPrevia(); };
+    v.ontimeupdate = () => { if (v.currentTime > E.desde + E.largo || v.currentTime < E.desde - 0.25) irAlTramo(); };
+  } else {
+    caja.innerHTML = `<img class="fuente" id="fuente" src="${E.url}">`;
   }
-  dibujarTexto();
+  $('recorte').style.display = E.tipo === 'video' && f.type !== 'image/gif' ? '' : 'none';
+  $('edSonido').style.display = E.tipo === 'video' && f.type !== 'image/gif' ? '' : 'none';
+  if (f.type === 'image/gif') E.sonido = false;
+  pintarHerramientas(); dibujarTexto();
+  $('editor').classList.add('abierto');
+
+  // Se sube en segundo plano mientras editás
+  try {
+    const r = await fetch('/api/subir', { method: 'POST', headers: { 'Content-Type': f.type }, body: f });
+    const d = await r.json(); if (!r.ok) throw new Error(d.error);
+    E.id = d.id; $('edEnviar').disabled = false;
+  } catch (e) { tostada(e.message || 'No pude subirlo'); cerrarEditor(); }
 }
 
-// El texto se dibuja en el navegador (con la letra de los memes) y se manda como imagen transparente
+function cerrarEditor() {
+  const v = $('fuente'); if (v?.pause) v.pause();
+  $('editor').classList.remove('abierto');
+}
+
+function pintarHerramientas() {
+  $('edEncuadre').textContent = E.llenar ? '⛶ Llenar' : '⛶ Completo';
+  $('edEncuadre').classList.toggle('on', E.llenar);
+  $('lienzo').classList.toggle('llenar', E.llenar);
+  $('edSonido').textContent = E.sonido ? '🔊 Con sonido' : '🔇 Mudo';
+  $('edSonido').classList.toggle('on', E.sonido);
+  $('edPos').textContent = E.pos === 'arriba' ? '⬆ arriba' : '⬇ abajo';
+  const v = $('fuente');
+  if (v?.tagName === 'VIDEO') { v.muted = !E.sonido || E.mudoForzado; }
+  $('lienzo').classList.toggle('mudo-forzado', E.sonido && E.mudoForzado);
+}
+
+function prepararRecorte() {
+  const tope = topeSeg();
+  E.largo = Math.min(E.largo, tope, Math.max(1, E.dur || tope));
+  const desde = $('desde'), largo = $('largo');
+  desde.max = Math.max(0, (E.dur || 0) - 0.5).toFixed(1); desde.value = E.desde;
+  largo.max = Math.min(tope, Math.max(1, Math.ceil(E.dur || tope))); largo.value = E.largo;
+  pintarTramo();
+}
+function pintarTramo() {
+  const fin = Math.min(E.dur || E.desde + E.largo, E.desde + E.largo);
+  $('tramo').textContent = `✂️ ${mmss(E.desde)} → ${mmss(fin)} · ${(fin - E.desde).toFixed(1)} s`;
+}
+function irAlTramo() { const v = $('fuente'); try { v.currentTime = E.desde; } catch {} }
+
+// Reproduce la vista previa CON sonido; si el navegador lo bloquea, arranca muda y avisa
+function reproducirPrevia() {
+  const v = $('fuente'); if (v?.tagName !== 'VIDEO') return;
+  v.muted = !E.sonido;
+  v.play().then(() => { E.mudoForzado = false; $('lienzo').classList.remove('pausa'); pintarHerramientas(); })
+    .catch(() => { v.muted = true; E.mudoForzado = E.sonido; v.play().catch(() => $('lienzo').classList.add('pausa')); pintarHerramientas(); });
+}
+
+$('lienzo').onclick = () => {
+  const v = $('fuente'); if (v?.tagName !== 'VIDEO') return;
+  if (E.mudoForzado) { E.mudoForzado = false; pintarHerramientas(); v.play(); return; }
+  if (v.paused) { v.play(); $('lienzo').classList.remove('pausa'); } else { v.pause(); $('lienzo').classList.add('pausa'); }
+};
+$('desde').oninput = (e) => { E.desde = +e.target.value; pintarTramo(); irAlTramo(); };
+$('largo').oninput = (e) => { E.largo = +e.target.value; pintarTramo(); };
+$('edEncuadre').onclick = () => { E.llenar = !E.llenar; pintarHerramientas(); };
+$('edSonido').onclick = () => { E.sonido = !E.sonido; E.mudoForzado = false; prepararRecorte(); pintarHerramientas(); };
+$('edPos').onclick = () => { E.pos = E.pos === 'arriba' ? 'abajo' : 'arriba'; pintarHerramientas(); dibujarTexto(); };
+$('edTexto').onclick = () => $('edTextoInput').focus();
+$('edTextoInput').oninput = (e) => { E.texto = e.target.value; dibujarTexto(); };
+$('edTextoInput').onkeydown = (e) => { if (e.key === 'Enter' && !$('edEnviar').disabled) crearYMandar(); };
+$('edCerrar').onclick = cerrarEditor;
+$('edEnviar').onclick = crearYMandar;
+
+// El texto se dibuja en el navegador (letra de meme) y viaja como imagen transparente
 function dibujarTexto() {
-  const c = $('capa'); if (!c) return null;
-  const x = c.getContext('2d');
+  const c = $('capa'), x = c.getContext('2d');
   x.clearRect(0, 0, 512, 512);
   const t = (E.texto || '').trim().toUpperCase();
   if (!t) return null;
@@ -495,90 +640,78 @@ function dibujarTexto() {
   return c.toDataURL('image/png');
 }
 
-async function cargarArchivo(f) {
-  if (!f) return;
-  if (!/^(image|video)\//.test(f.type)) return tostada('Eso no es ni foto ni video 🤨');
-  if (f.size > 20 * 1024 * 1024) return tostada('Muy pesado: máximo 20 MB');
-  $('paso').innerHTML = `<div class="cargando"><span class="gira">🍭</span><br>Subiendo…</div>`;
-  try {
-    const r = await fetch('/api/subir', { method: 'POST', headers: { 'Content-Type': f.type }, body: f });
-    const d = await r.json(); if (!r.ok) throw new Error(d.error);
-    if (E.url) URL.revokeObjectURL(E.url);
-    Object.assign(E, { id: d.id, tipo: d.tipo, url: URL.createObjectURL(f), desde: 0, resultado: null, dur: 0 });
-    if (d.tipo === 'video') {
-      E.dur = await new Promise((ok) => { const v = document.createElement('video'); v.preload = 'metadata'; v.onloadedmetadata = () => ok(v.duration || 0); v.onerror = () => ok(0); v.src = E.url; });
-    }
-    pasoEditar();
-  } catch (e) { tostada(e.message || 'No pude subirlo'); pasoVacio(); }
-}
+// ---------- Crear y mandar (el sticker aparece en el chat como mensaje) ----------
+const alFondo = () => setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 30);
 
-async function crear() {
-  const texto = dibujarTexto();
-  const opciones = { id: E.id, llenar: E.llenar, texto, inicio: E.desde, segundos: E.largo, sonido: E.tipo === 'video' && E.sonido };
-  $('paso').innerHTML = `<div class="cargando"><span class="gira">🍭</span><br>Cocinando tu sticker…</div>`;
+async function crearYMandar() {
+  if (!E.id) return;
+  const opciones = {
+    id: E.id, llenar: E.llenar, texto: dibujarTexto(), inicio: E.desde, segundos: E.largo,
+    sonido: E.tipo === 'video' && E.sonido,
+  };
+  cerrarEditor();
+
+  const el = document.createElement('div');
+  el.className = 'stk';
+  el.innerHTML = `<div class="marco"><div class="cocinando"><span>🍭</span></div></div><br>
+    <div class="pie"><span class="hora-txt">${hora()}</span><span class="tic reloj">🕓</span></div>`;
+  $('mensajes').appendChild(el); alFondo();
   escribiendo = true; pintarEstado();
+
   try {
     const r = await fetch('/api/crear', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(opciones) });
     const d = await r.json(); if (!r.ok) throw new Error(d.error);
-    E.resultado = d;
-    pasoResultado();
-  } catch (e) { tostada(e.message || 'No pude crearlo'); pasoEditar(); }
-  finally { escribiendo = false; pintarEstado(); }
-}
-
-function pasoResultado() {
-  const d = E.resultado, src = 'data:image/webp;base64,' + d.webp;
-  const conectado = estado.bot === 'conectado';
-  $('paso').innerHTML = `<div class="resultado">
-      <img src="${src}" alt="sticker">
-      ${d.audio ? `<audio controls src="data:audio/ogg;base64,${d.audio}"></audio>` : ''}
-      <div class="datos">${d.kb} KB${d.animado ? ` · ${d.segundos.toFixed(1)} s` : ' · estático'}${d.audio ? ' · con sonido 🔊' : ''}${d.sinSonido ? ' · el video no tenía sonido 🔇' : ''}</div>
-    </div>
-    <div class="acciones">
-      <button class="btn chico" id="bEditar" type="button">✏️ Editar</button>
-      <a class="btn chico" href="${src}" download="sticker.webp" style="text-decoration:none;text-align:center">⬇️</a>
-      <button class="btn verde" id="bMandar" type="button" ${conectado ? '' : 'disabled title="Conectá el bot primero"'}>📲 Mandármelo</button>
-    </div>
-    ${conectado ? '' : '<div class="consejo">Para mandarlo a WhatsApp, primero vinculá el bot (arriba). Mientras, podés descargarlo.</div>'}`;
-  $('bEditar').onclick = pasoEditar;
-  $('bMandar').onclick = mandar;
-  if (!galeria.some((g) => g.id === d.id)) { galeria.unshift({ id: d.id, src }); galeria = galeria.slice(0, 12); pintarGaleria(); }
-}
-
-async function mandar(idCreado) {
-  const id = typeof idCreado === 'string' ? idCreado : E.resultado?.id;
-  const boton = $('bMandar');
-  if (boton && typeof idCreado !== 'string') { boton.disabled = true; boton.textContent = 'Mandando…'; }
-  try {
-    const d = await api('/api/enviar', { id });
-    tostada(d.conSonido ? '¡Listo! Mandado con sonido 🔊' : '¡Listo! Ya está en tu WhatsApp ✓');
-    if (boton && typeof idCreado !== 'string') {
-      boton.textContent = '✓ Mandado';
-      if (!document.querySelector('#paso .consejo')) $('paso').insertAdjacentHTML('beforeend',
-        `<div class="consejo">💡 Abrí <b>Mensaje para mí</b> en WhatsApp, mantené apretado el sticker y tocá <b>⭐ Favoritos</b>: así lo tenés a mano en todos tus chats.</div>`);
+    const src = 'data:image/webp;base64,' + d.webp;
+    const audioUrl = d.audio ? urlDeBase64(d.audio, 'audio/ogg; codecs=opus') : null;
+    el.dataset.id = d.id;
+    if (audioUrl) el.classList.add('suena');
+    el.innerHTML = `<div class="marco"><img src="${src}" alt="sticker">${audioUrl ? '<button class="parlante" title="Escuchar">🔊</button>' : ''}</div><br>
+      <div class="pie">
+        <a href="${src}" download="sticker.webp" title="Descargar">⬇</a>
+        <button class="reenviar" title="Mandar a WhatsApp">📲</button>
+        <span>${d.kb} KB${d.animado ? ` · ${d.segundos.toFixed(1)} s` : ''}${d.sinSonido ? ' · sin sonido 🔇' : ''}</span>
+        <span class="hora-txt">${hora()}</span><span class="tic gris">✓</span>
+      </div>`;
+    if (audioUrl) {
+      el.querySelector('.marco').onclick = () => sonar(el, audioUrl);
+      sonar(el, audioUrl); // que suene apenas aparece, como cuando te llega uno
     }
+    el.querySelector('.reenviar').onclick = () => mandar(el);
+    alFondo();
+    if (estado.bot === 'conectado') await mandar(el, true);
+    else el.insertAdjacentHTML('afterend', burbuja('<p>Lo creé, pero no estoy conectado a WhatsApp 📡. Vinculame y tocá 📲 abajo del sticker para mandártelo.</p>', { tics: false }));
   } catch (e) {
-    tostada(e.message);
-    if (boton && typeof idCreado !== 'string') { boton.disabled = false; boton.textContent = '📲 Mandármelo'; }
+    el.innerHTML = `<div class="marco"><div class="cocinando">😓</div></div><br><div class="pie">No pude crearlo: ${esc(e.message || 'error')} <span class="tic error">⚠</span></div>`;
+  } finally {
+    escribiendo = false; pintarEstado(); alFondo();
   }
 }
 
-function pintarGaleria() {
-  if (!galeria.length) { $('galeriaMsj').innerHTML = ''; return; }
-  $('galeriaMsj').innerHTML = `<div class="msj bot sigue"><p style="font-size:13px;color:var(--suave)">Tus creaciones de hoy (tocá una para volver a mandarla):</p>
-    <div class="galeria">${galeria.map((g) => `<img src="${g.src}" data-id="${g.id}" title="Mandar de nuevo">`).join('')}</div></div>`;
-  $('galeriaMsj').querySelectorAll('img').forEach((i) => i.onclick = () => {
-    if (estado.bot !== 'conectado') return tostada('Conectá el bot primero');
-    mandar(i.dataset.id);
-  });
+async function mandar(el, automatico = false) {
+  const tic = el.querySelector('.tic');
+  if (estado.bot !== 'conectado') return tostada('Conectá el bot primero 📡');
+  tic.className = 'tic reloj'; tic.textContent = '🕓';
+  try {
+    const d = await api('/api/enviar', { id: el.dataset.id });
+    tic.className = 'tic'; tic.textContent = '✓✓';
+    tostada(d.conSonido ? 'Mandado con sonido 🔊 Buscalo en “Mensaje para mí”' : 'Mandado ✓ Buscalo en “Mensaje para mí”');
+    if (automatico && !localStorage.getItem('chupete-consejo')) {
+      try { localStorage.setItem('chupete-consejo', '1'); } catch {}
+      $('mensajes').insertAdjacentHTML('beforeend', burbuja('<p>💡 En WhatsApp abrí <b>Mensaje para mí</b>, mantené apretado el sticker y tocá <b>⭐ Favoritos</b>. Así lo tenés en todos tus chats.</p>', { tics: false }));
+      alFondo();
+    }
+  } catch (e) {
+    tic.className = 'tic error'; tic.textContent = '⚠';
+    tostada(e.message);
+  }
 }
 
-archivo.onchange = () => { cargarArchivo(archivo.files[0]); archivo.value = ''; };
-chat.ondragover = (e) => { e.preventDefault(); $('soltar')?.classList.add('encima'); };
-chat.ondragleave = () => $('soltar')?.classList.remove('encima');
-chat.ondrop = (e) => { e.preventDefault(); $('soltar')?.classList.remove('encima'); cargarArchivo(e.dataTransfer.files[0]); };
-document.addEventListener('paste', (e) => { const f = [...(e.clipboardData?.files || [])][0]; if (f) cargarArchivo(f); });
-pasoVacio();
+archivo.onchange = () => { abrirEditor(archivo.files[0]); archivo.value = ''; };
+chat.ondragover = (e) => { e.preventDefault(); chat.classList.add('encima'); };
+chat.ondragleave = () => chat.classList.remove('encima');
+chat.ondrop = (e) => { e.preventDefault(); chat.classList.remove('encima'); abrirEditor(e.dataTransfer.files[0]); };
+document.addEventListener('paste', (e) => { const f = [...(e.clipboardData?.files || [])][0]; if (f) abrirEditor(f); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarEditor(); });
 
 // ---------- Conexión con el panel ----------
 function conectar() {
@@ -593,7 +726,6 @@ function conectar() {
   });
   es.addEventListener('estado', (ev) => {
     const antes = estado.bot; estado = JSON.parse(ev.data); pintarEstado();
-    if (antes !== estado.bot && E.resultado && $('bMandar') && !$('bMandar').textContent.includes('Mandado')) pasoResultado();
   });
   es.addEventListener('log', (ev) => linea(JSON.parse(ev.data)));
   es.addEventListener('hecho', (ev) => { historial.unshift(JSON.parse(ev.data)); pintarActividad(); });
