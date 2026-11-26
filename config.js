@@ -8,8 +8,8 @@ export const ARCHIVO_CONFIG = path.join(DIR, 'config.json');
 
 export const PREDETERMINADA = {
   prefijo: '!',
-  autor: 'Mi Bot',              // autor por defecto del sticker
-  paquete: 'Stickers',          // nombre del paquete por defecto
+  autor: 'ChupeteBot',             // autor por defecto del sticker
+  paquete: 'baquete 1',         // nombre del paquete por defecto
   soloChatsPrivados: false,     // true = no responde en grupos
   imagenSueltaEnPrivado: true,  // en privado, una imagen/video sin texto también se convierte
   maxMB: 16,                    // tamaño máximo del archivo recibido
