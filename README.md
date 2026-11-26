@@ -1,11 +1,19 @@
-# Bot de WhatsApp para stickers (v2)
+# ChupeteBot: bot de WhatsApp para stickers
 
 Convierte imágenes, GIFs y videos en stickers, **incluidos los stickers con sonido** 🔊.
 Usa la librería Baileys: se conecta directo a WhatsApp, sin abrir Chrome.
 
-## Requisitos
-- **Node.js 20 o superior** (`node -v` para verlo).
-- ffmpeg **ya viene incluido**, no hace falta instalarlo.
+## Instalación rápida (Windows)
+1. Instalá **Node.js** (versión LTS) desde https://nodejs.org. Siguiente, siguiente, finalizar.
+2. En esta página tocá el botón verde **Code → Download ZIP** y descomprimí el archivo donde quieras.
+3. Entrá a la carpeta y hacé doble clic en **`Iniciar bot.vbs`**.
+   - Si Windows avisa que el archivo viene de internet: clic derecho en `Iniciar bot.vbs` → Propiedades → marcá **Desbloquear** → Aceptar, y probá de nuevo.
+   - La primera vez instala lo necesario (1 o 2 minutos, se ve una ventana negra).
+4. Se abre el panel en el navegador con un QR. Escanealo desde tu celular:
+   **WhatsApp → Dispositivos vinculados → Vincular dispositivo**.
+5. ¡Listo! Mandá un video con `!ss` a cualquier chat (incluso a vos mismo).
+
+El bot queda vinculado a **tu** WhatsApp. ffmpeg ya viene incluido, no hace falta instalar nada más.
 
 ## Cómo abrirlo
 - **Doble clic en `Iniciar bot.vbs`.** La primera vez instala lo necesario (1 o 2 minutos).
