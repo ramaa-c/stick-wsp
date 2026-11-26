@@ -1,0 +1,22 @@
+{
+  "name": "bot-stickers",
+  "version": "2.1.0",
+  "description": "Bot de WhatsApp que convierte imágenes y videos en stickers, incluidos stickers con sonido",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node panel.js",
+    "bot": "node index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "7.0.0-rc14",
+    "ffmpeg-static": "^5.3.0",
+    "node-webpmux": "^3.2.1",
+    "pino": "^9.6.0",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0"
+  }
+}

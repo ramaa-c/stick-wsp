@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bot de stickers</title>
+<style>
+  :root {
+    --fondo: #f3f1ec; --tarjeta: #ffffff; --texto: #1d1b18; --suave: #6b665e; --borde: #e3dfd6;
+    --verde: #1f9d55; --verde-suave: #e3f5ea; --ambar: #b7791f; --ambar-suave: #fbf0dc;
+    --rojo: #c53030; --rojo-suave: #fbe4e4; --acento: #2b2a28; --log: #191816; --log-texto: #e9e5dc;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fondo: #141412; --tarjeta: #1e1d1b; --texto: #eeeae2; --suave: #a29d93; --borde: #2f2d2a;
+      --verde-suave: #16301f; --ambar-suave: #352812; --rojo-suave: #3a1a1a; --acento: #eeeae2; --log: #0f0f0e;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fondo); color: var(--texto); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { display: flex; align-items: center; gap: 14px; padding: 18px 28px; border-bottom: 1px solid var(--borde); background: var(--tarjeta); position: sticky; top: 0; z-index: 2; }
+  header h1 { font-size: 18px; margin: 0; letter-spacing: -.01em; }
+  .pastilla { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--ambar-suave); color: var(--ambar); }
+  .pastilla::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .pastilla.ok { background: var(--verde-suave); color: var(--verde); }
+  .pastilla.mal { background: var(--rojo-suave); color: var(--rojo); }
+  .pastilla.ok::before { animation: latido 2s infinite; }
+  @keyframes latido { 50% { opacity: .35; } }
+  header .numero { color: var(--suave); font-size: 13px; }
+  header .espacio { flex: 1; }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 28px 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .ancho { grid-column: 1 / -1; }
+  section { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 14px; padding: 20px 22px; }
+  section h2 { font-size: 15px; margin: 0 0 14px; display: flex; align-items: center; justify-content: space-between; }
+  .ayuda { color: var(--suave); font-size: 13px; margin: 0 0 12px; }
+  button { font: inherit; font-size: 14px; border: 1px solid var(--borde); background: var(--tarjeta); color: var(--texto); padding: 8px 14px; border-radius: 9px; cursor: pointer; }
+  button:hover { border-color: var(--suave); }
+  button.primario { background: var(--acento); color: var(--tarjeta); border-color: var(--acento); }
+  button.peligro { color: var(--rojo); }
+  button:disabled { opacity: .5; cursor: default; }
+  .botones { display: flex; flex-wrap: wrap; gap: 8px; }
+  .vinculo { display: flex; gap: 22px; align-items: center; }
+  .vinculo img { width: 260px; height: 260px; border-radius: 10px; background: #fff; padding: 6px; border: 1px solid var(--borde); }
+  .codigo { font: 700 34px/1 ui-monospace, Consolas, monospace; letter-spacing: .12em; padding: 16px 20px; border: 2px dashed var(--borde); border-radius: 12px; }
+  ol { margin: 0; padding-left: 20px; } ol li { margin: 4px 0; }
+  .conectado-ok { display: flex; align-items: center; gap: 14px; }
+  .conectado-ok .icono { font-size: 34px; }
+  .cifras { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .cifra { border: 1px solid var(--borde); border-radius: 10px; padding: 10px 12px; }
+  .cifra b { display: block; font-size: 22px; }
+  .cifra span { color: var(--suave); font-size: 12px; }
+  .lista { max-height: 260px; overflow: auto; margin: 0; padding: 0; list-style: none; }
+  .lista li { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--borde); font-size: 14px; }
+  .lista li:last-child { border-bottom: 0; }
+  .lista .cuando { color: var(--suave); font-size: 12px; white-space: nowrap; }
+  .etiqueta { font-size: 12px; padding: 1px 8px; border-radius: 6px; background: var(--fondo); }
+  .etiqueta.error { background: var(--rojo-suave); color: var(--rojo); }
+  .etiqueta.sonido { background: var(--verde-suave); color: var(--verde); }
+  .vacio { color: var(--suave); font-size: 14px; }
+  #registro { background: var(--log); color: var(--log-texto); border-radius: 10px; padding: 12px 14px; height: 300px; overflow: auto; font: 12.5px/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
+  #registro .error { color: #ff8f8f; }
+  #registro .hora { color: #8d887e; margin-right: 8px; }
+  form.config { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px 18px; }
+  label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--suave); }
+  label.check { flex-direction: row; align-items: center; gap: 8px; color: var(--texto); font-size: 14px; }
+  input[type=text], input[type=number] { font: inherit; font-size: 14px; color: var(--texto); background: var(--fondo); border: 1px solid var(--borde); border-radius: 8px; padding: 8px 10px; }
+  input:focus { outline: 2px solid var(--suave); outline-offset: 0; }
+  .pie-form { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; }
+  .zona { border: 2px dashed var(--borde); border-radius: 12px; padding: 22px; text-align: center; color: var(--suave); cursor: pointer; }
+  .zona.encima { border-color: var(--suave); background: var(--fondo); }
+  .resultado { display: flex; gap: 18px; align-items: center; margin-top: 14px; }
+  .resultado img { width: 160px; height: 160px; background: repeating-conic-gradient(#ccc 0 25%, #eee 0 50%) 0 0/16px 16px; border-radius: 10px; }
+  .aviso { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--acento); color: var(--tarjeta); padding: 10px 18px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .aviso.ver { opacity: 1; }
+  .interruptor { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; padding: 16px; } .vinculo { flex-direction: column; align-items: flex-start; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎨 Bot de stickers</h1>
+  <span id="pastilla" class="pastilla">Conectando con el panel…</span>
+  <span id="numero" class="numero"></span>
+  <span class="espacio"></span>
+  <div class="botones">
+    <button id="bIniciar" class="primario">Iniciar</button>
+    <button id="bReiniciar">Reiniciar</button>
+    <button id="bDetener">Detener</button>
+  </div>
+</header>
+
+<main>
+  <section class="ancho" id="seccionVinculo">
+    <h2>Conexión con WhatsApp</h2>
+    <div id="vinculo"></div>
+  </section>
+
+  <section>
+    <h2>Actividad <button id="bBorrarHist" title="Borrar historial">Borrar</button></h2>
+    <div class="cifras">
+      <div class="cifra"><b id="cHoy">0</b><span>stickers hoy</span></div>
+      <div class="cifra"><b id="cSonido">0</b><span>con sonido hoy</span></div>
+      <div class="cifra"><b id="cTotal">0</b><span>en total</span></div>
+    </div>
+    <ul class="lista" id="historial"></ul>
+  </section>
+
+  <section>
+    <h2>Probar sin WhatsApp</h2>
+    <p class="ayuda">Soltá una imagen o video y mirá cómo queda el sticker antes de mandarlo.</p>
+    <div class="botones" style="margin-bottom:10px">
+      <label class="check"><input type="radio" name="modo" value="s" checked> Sticker</label>
+      <label class="check"><input type="radio" name="modo" value="ss"> Con sonido</label>
+    </div>
+    <div class="zona" id="zona">Arrastrá un archivo acá o hacé clic para elegirlo
+      <input type="file" id="archivo" accept="image/*,video/*" hidden>
+    </div>
+    <div id="resultado"></div>
+  </section>
+
+  <section class="ancho">
+    <h2>Registro <button id="bLimpiarLog">Limpiar vista</button></h2>
+    <div id="registro"></div>
+  </section>
+
+  <section class="ancho">
+    <h2>Configuración</h2>
+    <form class="config" id="form">
+      <label>Prefijo de comandos<input type="text" name="prefijo" maxlength="3"></label>
+      <label>Nombre del paquete<input type="text" name="paquete" maxlength="60"></label>
+      <label>Autor del sticker<input type="text" name="autor" maxlength="60"></label>
+      <label>Segundos del sticker animado (1–10)<input type="number" name="segundosSticker" min="1" max="10"></label>
+      <label>Segundos del sticker con sonido (1–10)<input type="number" name="segundosSonido" min="1" max="10"></label>
+      <label>Tamaño máximo de archivo (MB)<input type="number" name="maxMB" min="1" max="64"></label>
+      <label>Espera entre pedidos por persona (s)<input type="number" name="esperaEntreUsosSeg" min="0" max="600"></label>
+      <label>Pausa entre respuestas (ms)<input type="number" name="pausaEntreEnviosMs" min="0" max="10000"></label>
+      <label>Teléfono para vincular con código (vacío = QR)<input type="text" name="telefono" placeholder="5492664123456"></label>
+      <label class="check"><input type="checkbox" name="soloChatsPrivados"> No responder en grupos</label>
+      <label class="check"><input type="checkbox" name="imagenSueltaEnPrivado"> En privado, convertir imágenes sin comando</label>
+      <label class="check"><input type="checkbox" name="diagnostico"> Modo diagnóstico (registra cada mensaje)</label>
+      <div class="pie-form">
+        <button type="submit" class="primario">Guardar y aplicar</button>
+        <button type="button" id="bPredet">Valores por defecto</button>
+        <span class="ayuda" style="margin:0">Al guardar, el bot se reinicia solo.</span>
+      </div>
+    </form>
+  </section>
+
+  <section class="ancho">
+    <h2>Sistema</h2>
+    <div class="interruptor" id="filaAuto">
+      <div><b>Iniciar con Windows</b><p class="ayuda" style="margin:2px 0 0">El bot arranca solo, en segundo plano, cuando prendés la PC.</p></div>
+      <label class="check"><input type="checkbox" id="auto"> Activado</label>
+    </div>
+    <hr style="border:0;border-top:1px solid var(--borde);margin:16px 0">
+    <div class="botones">
+      <button id="bCerrarSesion" class="peligro">Desvincular WhatsApp</button>
+      <button id="bApagar" class="peligro">Apagar todo (bot y panel)</button>
+    </div>
+  </section>
+</main>
+<div class="aviso" id="aviso"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let estado = {}, historial = [], predeterminada = {};
+
+const NOMBRES = {
+  detenido: ['Detenido', 'mal'], iniciando: ['Iniciando…', ''], conectando: ['Conectando…', ''],
+  'esperando-qr': ['Esperando vinculación', ''], conectado: ['Conectado', 'ok'],
+  reconectando: ['Reconectando…', ''], 'sesion-cerrada': ['Sesión cerrada', 'mal'],
+  reemplazado: ['Abierto en otro lado', 'mal'], error: ['Error', 'mal'],
+};
+
+function aviso(t) { const a = $('aviso'); a.textContent = t; a.classList.add('ver'); clearTimeout(a._t); a._t = setTimeout(() => a.classList.remove('ver'), 2600); }
+
+async function api(ruta, cuerpo) {
+  const r = await fetch(ruta, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: cuerpo ? JSON.stringify(cuerpo) : undefined });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || 'Error');
+  return d;
+}
+
+function pintarEstado() {
+  const [nombre, clase] = NOMBRES[estado.bot] || [estado.bot, ''];
+  const p = $('pastilla'); p.textContent = nombre; p.className = 'pastilla ' + clase;
+  $('numero').textContent = estado.bot === 'conectado' && estado.numero ? '+' + estado.numero : '';
+  const corriendo = !['detenido', 'error', 'reemplazado'].includes(estado.bot);
+  $('bIniciar').disabled = corriendo; $('bDetener').disabled = !corriendo;
+
+  const v = $('vinculo');
+  if (estado.bot === 'conectado') {
+    v.innerHTML = `<div class="conectado-ok"><span class="icono">✅</span><div><b>Listo para usar.</b><br><span class="ayuda">Mandá un video con <b>!ss</b> o una imagen con <b>!s</b> a cualquier chat, incluso a vos mismo.</span></div></div>`;
+  } else if (estado.codigo) {
+    v.innerHTML = `<div class="vinculo"><div class="codigo">${estado.codigo}</div><ol>
+      <li>En el celular abrí WhatsApp → <b>Dispositivos vinculados</b>.</li>
+      <li>Tocá <b>Vincular dispositivo</b> → <b>Vincular con el número de teléfono</b>.</li>
+      <li>Escribí este código.</li></ol></div>`;
+  } else if (estado.qr) {
+    v.innerHTML = `<div class="vinculo"><img src="${estado.qr}" alt="QR"><ol>
+      <li>En el celular abrí WhatsApp → <b>Dispositivos vinculados</b>.</li>
+      <li>Tocá <b>Vincular dispositivo</b> y apuntá al código.</li>
+      <li>El código se renueva solo cada ~20 segundos: escaneá el que se ve.</li></ol></div>`;
+  } else if (estado.bot === 'detenido' || estado.bot === 'error') {
+    v.innerHTML = `<p class="vacio">El bot está detenido. Tocá <b>Iniciar</b> arriba.</p>`;
+  } else if (estado.bot === 'reemplazado') {
+    v.innerHTML = `<p class="vacio">Hay otra copia del bot abierta con esta sesión (quizás en otra ventana). Cerrala y tocá <b>Iniciar</b>.</p>`;
+  } else {
+    v.innerHTML = `<p class="vacio">Conectando con WhatsApp…</p>`;
+  }
+}
+
+function linea(e) {
+  const d = document.createElement('div');
+  if (e.nivel === 'error') d.className = 'error';
+  d.innerHTML = `<span class="hora">${e.hora}</span>`;
+  d.appendChild(document.createTextNode(e.texto));
+  const r = $('registro'); const abajo = r.scrollTop + r.clientHeight >= r.scrollHeight - 30;
+  r.appendChild(d); while (r.childNodes.length > 400) r.firstChild.remove();
+  if (abajo) r.scrollTop = r.scrollHeight;
+}
+
+function pintarHistorial() {
+  const hoy = new Date().toDateString();
+  const deHoy = historial.filter((h) => new Date(h.cuando).toDateString() === hoy && h.clase !== 'error');
+  $('cHoy').textContent = deHoy.length;
+  $('cSonido').textContent = deHoy.filter((h) => h.clase === 'con sonido').length;
+  $('cTotal').textContent = historial.filter((h) => h.clase !== 'error').length;
+  const ul = $('historial');
+  if (!historial.length) { ul.innerHTML = '<li class="vacio">Todavía no se hizo ningún sticker.</li>'; return; }
+  ul.innerHTML = '';
+  for (const h of historial.slice(0, 80)) {
+    const li = document.createElement('li');
+    const clase = h.clase === 'error' ? 'error' : h.clase === 'con sonido' ? 'sonido' : '';
+    const quien = h.chat ? (h.chat.length > 13 ? '…' + h.chat.slice(-8) : '+' + h.chat) : '';
+    li.innerHTML = `<span><span class="etiqueta ${clase}"></span> <span class="quien"></span></span><span class="cuando"></span>`;
+    li.querySelector('.etiqueta').textContent = h.clase;
+    li.querySelector('.quien').textContent = h.detalle ? h.detalle.slice(0, 60) : quien;
+    li.querySelector('.cuando').textContent = new Date(h.cuando).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    ul.appendChild(li);
+  }
+}
+
+function cargarForm(c) {
+  const f = $('form');
+  for (const [k, v] of Object.entries(c)) {
+    const el = f.elements[k]; if (!el) continue;
+    if (el.type === 'checkbox') el.checked = !!v; else el.value = v;
+  }
+}
+
+function conectar() {
+  const es = new EventSource('/eventos');
+  es.addEventListener('inicio', (ev) => {
+    const d = JSON.parse(ev.data);
+    estado = d.estado; historial = d.historial; predeterminada = d.predeterminada;
+    $('registro').innerHTML = ''; d.registro.forEach(linea);
+    pintarEstado(); pintarHistorial(); cargarForm(d.config);
+    $('auto').checked = d.autoarranque;
+    if (!d.esWindows) $('filaAuto').style.display = 'none';
+  });
+  es.addEventListener('estado', (ev) => { estado = JSON.parse(ev.data); pintarEstado(); });
+  es.addEventListener('log', (ev) => linea(JSON.parse(ev.data)));
+  es.addEventListener('hecho', (ev) => { historial.unshift(JSON.parse(ev.data)); pintarHistorial(); });
+  es.addEventListener('config', (ev) => cargarForm(JSON.parse(ev.data)));
+  es.onerror = () => { const p = $('pastilla'); p.textContent = 'Panel cerrado'; p.className = 'pastilla mal'; };
+}
+
+// Botones
+$('bIniciar').onclick = () => api('/api/iniciar').catch((e) => aviso(e.message));
+$('bReiniciar').onclick = () => api('/api/reiniciar').then(() => aviso('Reiniciando el bot…')).catch((e) => aviso(e.message));
+$('bDetener').onclick = () => api('/api/detener').catch((e) => aviso(e.message));
+$('bLimpiarLog').onclick = () => { $('registro').innerHTML = ''; };
+$('bBorrarHist').onclick = () => { if (confirm('¿Borrar el historial?')) api('/api/historial/borrar').then(() => { historial = []; pintarHistorial(); }); };
+$('bCerrarSesion').onclick = () => {
+  if (confirm('Esto desvincula el bot de tu WhatsApp. Después vas a tener que escanear el QR de nuevo. ¿Seguir?'))
+    api('/api/cerrar-sesion').then(() => aviso('Sesión borrada. Vinculá de nuevo.')).catch((e) => aviso(e.message));
+};
+$('bApagar').onclick = () => {
+  if (confirm('¿Apagar el bot y el panel? Para volver a abrirlo usá "Iniciar bot".'))
+    api('/api/apagar').then(() => { document.body.innerHTML = '<p style="padding:40px;font-size:18px">Bot apagado. Podés cerrar esta pestaña.</p>'; });
+};
+$('auto').onchange = (e) => api('/api/autoarranque', { activar: e.target.checked })
+  .then((d) => aviso(d.autoarranque ? 'Va a arrancar solo con Windows.' : 'Autoarranque desactivado.'))
+  .catch((err) => { aviso(err.message); e.target.checked = !e.target.checked; });
+
+$('form').onsubmit = (e) => {
+  e.preventDefault();
+  const f = e.target, datos = {};
+  for (const el of f.elements) if (el.name) datos[el.name] = el.type === 'checkbox' ? el.checked : el.value;
+  api('/api/config', datos).then((d) => {
+    aviso('Guardado. Reiniciando el bot…');
+    if (d.cambioPuerto) setTimeout(() => alert('Cambiaste el puerto: cerrá todo con "Apagar todo" y volvé a abrir el panel.'), 300);
+  }).catch((err) => aviso(err.message));
+};
+$('bPredet').onclick = () => cargarForm(predeterminada);
+
+// Prueba de conversión
+const zona = $('zona'), archivo = $('archivo');
+zona.onclick = () => archivo.click();
+zona.ondragover = (e) => { e.preventDefault(); zona.classList.add('encima'); };
+zona.ondragleave = () => zona.classList.remove('encima');
+zona.ondrop = (e) => { e.preventDefault(); zona.classList.remove('encima'); if (e.dataTransfer.files[0]) probar(e.dataTransfer.files[0]); };
+archivo.onchange = () => { if (archivo.files[0]) probar(archivo.files[0]); archivo.value = ''; };
+
+async function probar(f) {
+  const modo = document.querySelector('input[name=modo]:checked').value;
+  const out = $('resultado');
+  out.innerHTML = '<p class="vacio">Convirtiendo…</p>';
+  try {
+    const r = await fetch('/api/probar?modo=' + modo, { method: 'POST', headers: { 'Content-Type': f.type || 'application/octet-stream' }, body: f });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Error');
+    const webp = 'data:image/webp;base64,' + d.webp;
+    let html = `<div class="resultado"><img src="${webp}" alt="Sticker"><div>
+      <b>${d.kb} KB</b>${d.segundos ? ` · ${d.segundos.toFixed(1)} s` : ''}${d.recortado ? ' · recortado' : ''}<br>`;
+    if (d.audio) html += `<audio controls src="data:audio/ogg;base64,${d.audio}" style="margin:8px 0;max-width:220px"></audio><br>`;
+    if (d.sinSonido) html += `<span class="ayuda">Ese video no tiene sonido.</span><br>`;
+    html += `<a href="${webp}" download="sticker.webp">Descargar sticker</a></div></div>`;
+    out.innerHTML = html;
+  } catch (e) {
+    out.innerHTML = `<p class="vacio">❌ ${e.message}</p>`;
+  }
+}
+
+conectar();
+setInterval(pintarHistorial, 60000);
+</script>
+</body>
+</html>

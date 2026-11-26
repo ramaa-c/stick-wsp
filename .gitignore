@@ -1,0 +1,14 @@
+# Dependencias
+node_modules/
+
+# Sesión de WhatsApp: son tus credenciales, NUNCA subirlas
+sesion/
+.wwebjs_auth/
+.wwebjs_cache/
+
+# Datos locales de cada PC
+config.json
+historial.json
+bot.log
+bot.log.viejo
+qr.html
